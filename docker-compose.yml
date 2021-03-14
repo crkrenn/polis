@@ -21,8 +21,8 @@ services:
     env_file: ./server/docker-dev.env
     image: polisdemo/server:dev
     build:
-      context: .
-      dockerfile: Dockerfile-server
+      context: ./server
+      dockerfile: Dockerfile
     depends_on:
       - "postgres"
       - "file-server"
@@ -43,8 +43,7 @@ services:
     depends_on:
       - "postgres"
     build:
-      context: .
-      dockerfile: Dockerfile-math
+      context: ./math
     networks:
       - "polis-dev"
     volumes:
@@ -56,7 +55,7 @@ services:
     image: polisdemo/postgres:dev
     restart: always
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile-db
     networks:
       - "polis-dev"
@@ -72,8 +71,8 @@ services:
     container_name: polis-nginx-proxy
     image: polisdemo/nginx-proxy:dev
     build:
-      context: .
-      dockerfile: Dockerfile-nginx
+      context: ./file-server
+      dockerfile: nginx.Dockerfile
     depends_on:
       - "server"
     networks:
@@ -88,8 +87,8 @@ services:
     container_name: polis-file-server
     image: polisdemo/file-server:dev
     build:
-      context: .
-      dockerfile: Dockerfile-file-server
+      context: ./file-server
+      dockerfile: Dockerfile
     depends_on:
       - "client-participation"
       - "client-admin"
@@ -106,8 +105,7 @@ services:
     container_name: polis-client-participation
     image: polisdemo/client-participation:dev
     build:
-      context: .
-      dockerfile: Dockerfile-client-participation
+      context: ./client-participation
       args:
         GIT_HASH: "${GIT_HASH}"
 
@@ -115,8 +113,7 @@ services:
     container_name: polis-client-admin
     image: polisdemo/client-admin:dev
     build:
-      context: .
-      dockerfile: Dockerfile-client-admin   
+      context: ./client-admin
       args:
         GIT_HASH: "${GIT_HASH}"
 
@@ -124,11 +121,10 @@ services:
     container_name: polis-client-report
     image: polisdemo/client-report:dev
     build:
-      context: .
-      dockerfile: Dockerfile-client-report    
+      context: ./client-report
       args:
         GIT_HASH: "${GIT_HASH}"
-  
+
   maildev:
     image: maildev/maildev:1.1.0
     networks:
