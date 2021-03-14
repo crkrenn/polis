@@ -1,13 +1,12 @@
 FROM node:14.5.0-alpine
 
-WORKDIR /app
+ENV POLIS_ROOT=/
+WORKDIR ${POLIS_ROOT}config
 
-COPY package*.json ./
+COPY config/package*.json ./
 RUN npm install
 
-COPY ./* ./config/
-
-COPY . .
+COPY config/ ./
 
 RUN node export_config.js
 
