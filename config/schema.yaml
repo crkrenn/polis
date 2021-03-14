@@ -13,6 +13,11 @@
 
 # @TODO: update all formats (https://www.npmjs.com/package/convict)
 
+<<<<<<< HEAD
+=======
+# The defaults for all variables below are currently for development builds.
+
+>>>>>>> debug/node-convict-2
 env:
   doc: The application environment
   format:
@@ -24,6 +29,10 @@ env:
 
 # for server
 aws_access_key_id:
+<<<<<<< HEAD
+=======
+  tag: api
+>>>>>>> debug/node-convict-2
   doc: aws_access_key_id
   default: undefined
   env: AWS_ACCESS_KEY_ID
@@ -73,6 +82,13 @@ polis_slack_app_client_secret:
   doc: polis_slack_app_client_secret
   default: X
   env: POLIS_SLACK_APP_CLIENT_SECRET
+<<<<<<< HEAD
+=======
+disable_plans:
+  doc: disable_plans
+  default: true
+  env: DISABLE_PLANS
+>>>>>>> debug/node-convict-2
 disable_intercom:
   doc: disable_intercom
   default: true
@@ -237,12 +253,17 @@ mailgun_api_key:
   doc: mailgun_api_key
   default: undefined
   env: MAILGUN_API_KEY
+<<<<<<< HEAD
+=======
+  
+>>>>>>> debug/node-convict-2
 aws_ses_api_version:
   doc: aws_s3_api_version
   default: 2010-12-01
   env: AWS_S3_API_VERSION
 # config.get('aws_ses_api_version')
 
+<<<<<<< HEAD
 
 
 
@@ -252,4 +273,79 @@ aws_ses_api_version:
 
 
 
+=======
+# polis.config
+domainWhitelist: 
+  doc: domainWhitelist
+  default:
+    - ^localhost$
+    - ^192\\.168\\.1\\.141$
+    - ^192\\.168\\.1\\.140$
+    - ^pol\\.is
+    - .+\\.pol\\.is$
+    - ^xip\\.io$
+    - .+\\.xip\\.io$
+  env: DOMAIN_WHITELIST
+
+uploader:
+  doc: uploader for compiled static javascript
+  format:
+    - local
+    - s3
+    - scp
+  default: local
+  env: UPLOADER
+
+service_url:
+  doc: Point to a polisServer instance (local recommended for dev)
+  default: http://localhost:5000
+  env: SERVICE_URL
+
+client_participation_port:
+  doc: Note that this must match the participation client port specified in polisServer instance
+  default: 5001
+  env: CLIENT_PARTICIPATION_PORT
+
+fb_app_id:
+  doc: must register with facebook and get a facebook app id to use the facebook auth features
+  default: 661042417336977
+  env: FB_APP_ID
+
+local_output_path:
+  doc: Uploader settings local
+  default: ./build
+  env: LOCAL_OUTPUT_PATH
+
+s3_bucket_prod:
+  doc: uploader settings s3
+  default: pol.is
+  env: S3_BUCKET_PROD
+
+s3_bucket_preprod:
+  doc: uploader settings s3
+  default: preprod.pol.is
+  env: S3_BUCKET_PREPROD
+
+scp_subdir_preprod:
+  doc: uploader settings scp
+  default: preprod
+  env: SCP_SUBDIR_PREPROD
+
+scp_subdir_prod:
+  doc: uploader settings scp
+  default: prod
+  env: SCP_SUBDIR_PROD
+
+port:
+  doc: port
+  default: 5000
+  env: PORT
+
+# Options: maildev, aws-ses, mailgun
+# Example: `aws-ses,mailgun` would try sending via AWS SES first, and fallback to Mailgun on error.
+email_transport_types:
+  doc: email_transport_types ex. maildev, aws-ses, mailgun
+  default: maildev
+  env: EMAIL_TRANSPORT_TYPES
+>>>>>>> debug/node-convict-2
 

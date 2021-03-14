@@ -1,3 +1,6 @@
+let POLIS_ROOT = process.env.POLIS_ROOT
+var config = require(POLIS_ROOT + 'config/config.js');
+
 const _ = require('underscore');
 const Config = require('../config');
 const yell = require('../log').yell;
@@ -17,11 +20,11 @@ const MPromise = require('../utils/metered').MPromise;
 const pgnative = require('pg').native; //.native, // native provides ssl (needed for dev laptop to access) http://stackoverflow.com/questions/10279965/authentication-error-when-connecting-to-heroku-postgresql-databa
 const parsePgConnectionString = require('pg-connection-string').parse;
 
-const usingReplica = process.env.DATABASE_URL !== process.env[process.env.DATABASE_FOR_READS_NAME];
+const usingReplica = config.get('database_url') !== config.get('database_for_reads_url');
 const poolSize = Config.isDevMode() ? 2 : (usingReplica ? 3 : 12)
 
 // not sure how many of these config options we really need anymore
-const pgConnection = Object.assign(parsePgConnectionString(process.env.DATABASE_URL),
+const pgConnection = Object.assign(parsePgConnectionString(config.get('database_url')),
   {max: poolSize,
     isReadOnly: false,
    poolLog: function(str, level) {
@@ -29,7 +32,7 @@ const pgConnection = Object.assign(parsePgConnectionString(process.env.DATABASE_
        console.log("pool.primary." + level + " " + str);
      }
    }})
-const readsPgConnection = Object.assign(parsePgConnectionString(process.env[process.env.DATABASE_FOR_READS_NAME]),
+const readsPgConnection = Object.assign(parsePgConnectionString(config.get('database_for_reads_url')),
   {max: poolSize,
    isReadOnly: true,
    poolLog: function(str, level) {

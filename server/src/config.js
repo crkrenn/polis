@@ -1,6 +1,12 @@
-const devMode = require('boolean')(get('DEV_MODE'));
+let POLIS_ROOT = process.env.POLIS_ROOT
+var config = require(POLIS_ROOT + 'config/config.js');
+console.log('server aws_region:' + config.get('aws_region'));
 
-const domainOverride = process.env.DOMAIN_OVERRIDE || null;
+const isTrue = require('boolean');
+
+const devMode = isTrue(config.get('dev_mode'));
+
+const domainOverride = config.get('domain_override');
 
 function getServerNameWithProtocol(req) {
   let server = "https://pol.is";

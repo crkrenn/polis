@@ -1,5 +1,13 @@
 // Copyright (C) 2012-present, The Authors. This program is free software: you can redistribute it and/or  modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+let POLIS_ROOT = process.env.POLIS_ROOT
+var config = require(POLIS_ROOT + 'config/config.js');
+
+// keep these lines to help with debugging conversion
+// from process.env to config.get
+console.log("client-admin service_url process.env >>"+process.env.SERVICE_URL+"<<")
+console.log("client-admin service_url config.get >>"+config.get('service_url')+"<<")
+
 var { boolean: isTrue } = require("boolean");
 var path = require("path");
 var express = require("express");
@@ -20,7 +28,7 @@ app.use(
   })
 );
 
-const serviceUrl = polisConfig.SERVICE_URL ? polisConfig.SERVICE_URL : "https://pol.is";
+const serviceUrl = config.get('service_url');
 console.log("SERVICE_URL:", serviceUrl);
 
 function proxy(req, res) {

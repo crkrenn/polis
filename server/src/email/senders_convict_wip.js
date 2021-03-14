@@ -3,6 +3,8 @@
 
 let POLIS_ROOT = process.env.POLIS_ROOT
 var config = require(POLIS_ROOT + 'config/config.js');
+console.log('server aws_region:' + config.get('aws_region'));
+
 
 const fs = require('fs');
 const nodemailer = require('nodemailer');

@@ -13,7 +13,7 @@
 # to stop:
 # docker-compose down
 
-version: "3.1"
+version: "3.4"
 
 services:
   server:
@@ -21,15 +21,20 @@ services:
     env_file: ./server/docker-dev.env
     image: polisdemo/server:dev
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile-server
     depends_on:
       - "postgres"
       - "file-server"
     networks:
       - "polis-dev"
-    ports:
-      - "5000:5000"
+    volumes:
+      - "config:/config"
+    # close external ports by default
+    # ports:
+      # - "5000:5000"
+      # for connecting a debugger
+      # - "9229:9229"
 
   math:
     container_name: polis-math
@@ -38,9 +43,12 @@ services:
     depends_on:
       - "postgres"
     build:
-      context: ./math
+      context: .
+      dockerfile: Dockerfile-math
     networks:
       - "polis-dev"
+    volumes:
+      - "config:/config"
 
   postgres:
     container_name: polis-postgres
@@ -48,24 +56,30 @@ services:
     image: polisdemo/postgres:dev
     restart: always
     build:
-      context: ./server
+      context: .
       dockerfile: Dockerfile-db
     networks:
       - "polis-dev"
     volumes:
       - "backups:/backups"
+      - "config:/config"
       - "postgres:/var/lib/postgresql/data"
+    # close external ports by default
+    #ports:
+      #- "5432:5432"
 
   nginx-proxy:
     container_name: polis-nginx-proxy
     image: polisdemo/nginx-proxy:dev
     build:
-      context: ./file-server
-      dockerfile: nginx.Dockerfile
+      context: .
+      dockerfile: Dockerfile-nginx
     depends_on:
       - "server"
     networks:
       - "polis-dev"
+    volumes:
+      - "config:/config"
     ports:
       - "80:80"
       - "443:443"
@@ -74,22 +88,26 @@ services:
     container_name: polis-file-server
     image: polisdemo/file-server:dev
     build:
-      context: ./file-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile-file-server
     depends_on:
       - "client-participation"
       - "client-admin"
       - "client-report"
     networks:
       - "polis-dev"
-    ports:
-      - "8080:8080"
+    volumes:
+      - "config:/config"
+    # close external ports by default
+    # ports:
+      #- "8080:8080"
 
   client-participation:
     container_name: polis-client-participation
     image: polisdemo/client-participation:dev
     build:
-      context: ./client-participation
+      context: .
+      dockerfile: Dockerfile-client-participation
       args:
         GIT_HASH: "${GIT_HASH}"
 
@@ -97,7 +115,8 @@ services:
     container_name: polis-client-admin
     image: polisdemo/client-admin:dev
     build:
-      context: ./client-admin
+      context: .
+      dockerfile: Dockerfile-client-admin   
       args:
         GIT_HASH: "${GIT_HASH}"
 
@@ -105,19 +124,33 @@ services:
     container_name: polis-client-report
     image: polisdemo/client-report:dev
     build:
-      context: ./client-report
+      context: .
+      dockerfile: Dockerfile-client-report    
       args:
         GIT_HASH: "${GIT_HASH}"
-
+  
   maildev:
     image: maildev/maildev:1.1.0
     networks:
       - "polis-dev"
+    # close external ports by default
+    # but, 1080 is needed for cypress testing
     ports:
       # User interface
       - "1080:80"
       # SMTP port
-      - "25:25"
+      # - "25:25"
+  
+  config:
+    container_name: polis-config
+    image: polisdemo/config:dev
+    build:
+      context: .
+      dockerfile: Dockerfile-config
+      args:
+        GIT_HASH: "${GIT_HASH}"
+    volumes:
+      - "config:/config"
 
 networks:
   polis-dev:
@@ -125,3 +158,6 @@ networks:
 volumes:
   backups:
   postgres:
+  config:
+    # We hardcode this machine name so it won't vary depending on git dir name.
+    name: polis_config

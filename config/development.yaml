@@ -8,6 +8,11 @@
 
 # for easy json/yaml conversion: https://www.json2yaml.com/
 
+<<<<<<< HEAD
+=======
+aws_region: us-north-14
+
+>>>>>>> debug/node-convict-2
 # aws_access_key_id:
 #   doc: aws_access_key_id
 #   default: NA
