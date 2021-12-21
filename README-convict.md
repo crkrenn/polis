@@ -14,3 +14,5 @@ npm run e2e:headless
 
 sudo reboot # reboot whole GCP server
 
+# need to deactivate mail server (e.g. exim4)
+
