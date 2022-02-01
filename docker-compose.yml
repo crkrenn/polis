@@ -19,6 +19,8 @@ services:
   server:
     container_name: polis-server
     env_file: ./server/docker-dev.env
+    environment:
+      - POLIS_ROOT=/app/
     image: compdem/polis-server:${TAG}
     build:
       context: ./server
@@ -28,6 +30,8 @@ services:
       - "file-server"
     networks:
       - "polis-net"
+    volumes:
+      - "config:/app/config"
     ports:
       - "5000:5000"
       - "9229:9229"
@@ -40,6 +44,8 @@ services:
       - "postgres"
     build:
       context: ./math
+    volumes:
+      - "config:/config"
     networks:
       - "polis-net"
 
@@ -47,6 +53,8 @@ services:
     container_name: polis-postgres
     env_file: ./server/docker-db-dev.env
     image: compdem/polis-postgres:${TAG}
+    depends_on:
+      - "config"
     restart: always
     build:
       context: ./server
@@ -55,6 +63,7 @@ services:
       - "polis-net"
     volumes:
       - "backups:/backups"
+      - "config:/config"
       - "postgres:/var/lib/postgresql/data"
 
   nginx-proxy:
@@ -85,12 +94,16 @@ services:
       - "client-report"
     networks:
       - "polis-net"
+    volumes:
+      - "config:/config"
     ports:
       - "8080:8080"
 
   client-participation:
     container_name: polis-client-participation
     image: compdem/polis-client-participation:${TAG}
+    depends_on:
+      - "config"
     build:
       context: ./client-participation
       args:
@@ -99,6 +112,8 @@ services:
   client-admin:
     container_name: polis-client-admin
     image: compdem/polis-client-admin:${TAG}
+    depends_on:
+      - "config"
     build:
       context: ./client-admin
       args:
@@ -107,6 +122,8 @@ services:
   client-report:
     container_name: polis-client-report
     image: compdem/polis-client-report:${TAG}
+    depends_on:
+      - "config"
     build:
       context: ./client-report
       args:
@@ -122,9 +139,19 @@ services:
       # SMTP port
       - "25:25"
 
+  config:
+    build:
+      context: ./config
+      dockerfile: Dockerfile
+    volumes:
+      - "config:/config"
+
 networks:
   polis-net:
 
 volumes:
   backups:
   postgres:
+  config:
+    # We hardcode this machine name so it won't vary depending on git dir name.
+    name: polis_config
