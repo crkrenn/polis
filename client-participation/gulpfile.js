@@ -50,6 +50,8 @@ var spawn = require("child_process").spawn;
 var Stream = require("stream");
 var url = require("url");
 
+var polisConfig = require("./polis.config");
+
 let POLIS_ROOT = process.env.POLIS_ROOT
 var yaml_config = require(POLIS_ROOT + 'config/config.js');
 
@@ -299,7 +301,7 @@ gulp.task("embedJs", function () {
 gulp.task("index", [], function () {
   var s = gulp.src("index.html");
   var basepath = prepPathForTemplate(destRootRest);
-  var domainWhitelist = '["' + yaml_config.get('domainWhitelist').join('","') + '"]';
+  var domainWhitelist = '["' + polisConfig.domainWhitelist.join('","') + '"]';
   if (devMode) {
     s = s.pipe(
       template({
