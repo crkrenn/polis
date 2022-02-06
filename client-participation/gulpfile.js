@@ -53,7 +53,7 @@ var url = require("url");
 let POLIS_ROOT = process.env.POLIS_ROOT
 var yaml_config = require(POLIS_ROOT + 'config/config.js');
 
-var polisConfig = require("./polis.config");í
+var polisConfig = require("./polis.config");
 
 console.log("Uploader: " + yaml_config.get('uploader'));
 
