@@ -55,7 +55,7 @@ var yaml_config = require(POLIS_ROOT + 'config/config.js');
 
 var polisConfig = require("./polis.config");
 
-console.log("Uploader: " + yaml_config.get('uploader'));
+console.log("Uploader: " + polisConfig.UPLOADER);
 
 // WARNING: useJsHint gets mutated in watch builds
 var useJsHint = true;
@@ -111,7 +111,7 @@ function prepPathForTemplate(path) {
 gulp.task("connect", [], function () {
   function proxyToPreprod(req, response) {
     var x = request(
-      (yaml_config.get('service_url') || "https://preprod.pol.is") + req.originalUrl
+      (polisConfig.SERVICE_URL || "https://preprod.pol.is") + req.originalUrl
     );
     x.on("error", function (err) {
       response.status(500).end();
@@ -235,8 +235,8 @@ gulp.task("connect", [], function () {
   app.use(/^\/wimp$/, express.static(path.join(destRootBase, "wimp.html")));
   app.use(/^\/try$/, express.static(path.join(destRootBase, "try.html")));
 
-  app.listen(yaml_config.get('port'));
-  console.log("listening on localhost:" + yaml_config.get('port'));
+  app.listen(polisConfig.PORT);
+  console.log("listening on localhost:" + polisConfig.PORT);
 });
 
 function getGitHash() {
@@ -288,7 +288,7 @@ gulp.task("embedJs", function () {
       ])
       .pipe(
         template({
-          polisHostName: yaml_config.get('service_hostname') || "pol.is",
+          polisHostName: polisConfig.SERVICE_HOSTNAME || "pol.is",
         })
       )
       // .pipe(template({
