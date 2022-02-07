@@ -53,8 +53,6 @@ var url = require("url");
 let POLIS_ROOT = process.env.POLIS_ROOT
 var yaml_config = require(POLIS_ROOT + 'config/config.js');
 
-var polisConfig = require("./polis.config");
-
 console.log("Uploader: " + yaml_config.get('uploader'));
 
 // WARNING: useJsHint gets mutated in watch builds
@@ -301,15 +299,15 @@ gulp.task("embedJs", function () {
 gulp.task("index", [], function () {
   var s = gulp.src("index.html");
   var basepath = prepPathForTemplate(destRootRest);
-  var domainWhitelist = '["' + polisConfig.domainWhitelist.join('","') + '"]';
+  var domainWhitelist = '["' + yaml_config.get('domainWhitelist').join('","') + '"]';
   if (devMode) {
     s = s.pipe(
       template({
         basepath: basepath,
         basepath_visbundle: basepath_visbundle_dev,
         d3Filename: "d3.js",
-        fbAppId: polisConfig.FB_APP_ID,
-        useIntercom: !isTrue(polisConfig.DISABLE_INTERCOM),
+        fbAppId: yaml_config.get('fb_app_id'),
+        useIntercom: !isTrue(config.get('disable_intercom')),
         versionString: versionString,
         domainWhitelist: domainWhitelist,
       })
@@ -321,8 +319,8 @@ gulp.task("index", [], function () {
         basepath: basepath, // proxy through server (cached by cloudflare, and easier than choosing a bucket for preprod, etc)
         basepath_visbundle: basepath,
         d3Filename: "d3.min.js",
-        fbAppId: polisConfig.FB_APP_ID,
-        useIntercom: !isTrue(polisConfig.DISABLE_INTERCOM),
+        fbAppId: yaml_config.get('fb_app_id'),
+        useIntercom: !isTrue(yaml_config.get('disable_intercom')),
         versionString: versionString,
         domainWhitelist: domainWhitelist,
       })
@@ -659,15 +657,15 @@ gulp.task("scriptsD3v4", function () {
 gulp.task("preprodConfig", function () {
   preprodMode = true;
   minified = true;
-  scpSubdir = polisConfig.SCP_SUBDIR_PREPROD;
-  s3Subdir = polisConfig.S3_BUCKET_PREPROD;
+  scpSubdir = yaml_config.get('scp_subdir_preprod');
+  s3Subdir = yaml_config.get('s3_bucket_preprod');
 });
 
 gulp.task("prodConfig", function () {
   prodMode = true;
   minified = true;
-  scpSubdir = polisConfig.SCP_SUBDIR_PROD;
-  s3Subdir = polisConfig.S3_BUCKET_PROD;
+  scpSubdir = yaml_config.get('scp_subdir_prod');
+  s3Subdir = yaml_config.get('s3_bucket_prod');
 });
 
 gulp.task("unminifiedConfig", function () {
@@ -793,12 +791,12 @@ gulp.task("deploy_TO_PRODUCTION", ["prodConfig", "dist"], function () {
   notifySlackOfDeployment("prod");
 
   var uploader;
-  if ("s3" === polisConfig.UPLOADER) {
+  if ("s3" === yaml_config.get('uploader')) {
     uploader = s3uploader({
       bucket: s3Subdir,
     });
   }
-  if ("scp" === polisConfig.UPLOADER) {
+  if ("scp" === yaml_config.get('uploader')) {
     uploader = scpUploader({
       // TODO needs to upload as prod somehow.
       // subdir: "cached",
@@ -809,7 +807,7 @@ gulp.task("deploy_TO_PRODUCTION", ["prodConfig", "dist"], function () {
       },
     });
   }
-  if ("local" === polisConfig.UPLOADER) {
+  if ("local" === yaml_config.get('uploader')) {
     uploader = localUploader;
     uploader.needsHeadersJson = true;
   }
@@ -820,12 +818,12 @@ function doUpload() {
   notifySlackOfDeployment("preprod");
 
   var uploader;
-  if ("s3" === polisConfig.UPLOADER) {
+  if ("s3" === yaml_config.get('uploader')) {
     uploader = s3uploader({
       bucket: s3Subdir,
     });
   }
-  if ("scp" === polisConfig.UPLOADER) {
+  if ("scp" === yaml_config.get('uploader')) {
     uploader = scpUploader({
       // TODO needs to upload as PREprod somehow.
       // subdir: "cached",
@@ -836,7 +834,7 @@ function doUpload() {
       },
     });
   }
-  if ("local" === polisConfig.UPLOADER) {
+  if ("local" === yaml_config.get('uploader')) {
     uploader = localUploader;
     uploader.needsHeadersJson = true;
   }
@@ -860,7 +858,7 @@ gulp.task("deploySurvey", ["prodConfig", "dist"], function () {
 
 function localUploader(params) {
   params.subdir = params.subdir || "";
-  return gulp.dest(path.join(polisConfig.LOCAL_OUTPUT_PATH, params.subdir));
+  return gulp.dest(path.join(yaml_config.get('local_output_path'), params.subdir));
 }
 
 function s3uploader(params) {
