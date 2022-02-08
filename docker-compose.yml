@@ -78,6 +78,8 @@ services:
       - "server"
     networks:
       - "polis-net"
+    volumes:
+      - "config:/config"
     ports:
       - "80:80"
       - "443:443"
