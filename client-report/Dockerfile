@@ -8,9 +8,6 @@ RUN apk add git --no-cache
 COPY package*.json ./
 RUN npm ci
 
-COPY polis.config.template.js polis.config.js
-# If polis.config.js exists on host, will override template here.
-
 COPY --from=polis_config /config/config.js /app/config/
 COPY --from=polis_config /config/*.yaml /app/config/
 
