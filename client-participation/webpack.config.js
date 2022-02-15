@@ -15,6 +15,9 @@ module.exports = {
     filename: "vis_bundle.js",
     publicPath: "/dist/",
   },
+  resolve: {
+    extensions: [".js", ".css", ".png", ".svg"],
+  },
   mode: 'production',
   optimization: {
     minimize: true,
