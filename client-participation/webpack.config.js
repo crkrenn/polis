@@ -19,13 +19,6 @@ module.exports = {
     extensions: [".js", ".css", ".png", ".svg"],
   },
   plugins: [
-    new LodashModuleReplacementPlugin({
-      "currying": true,
-      "flattening": true,
-      "paths": true,
-      "placeholders": true,
-      "shorthands": true
-    }),
     new webpack.DefinePlugin({
       "process.env.NODE_ENV": JSON.stringify("production"),
     }),
