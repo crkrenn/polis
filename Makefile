@@ -3,11 +3,15 @@
 # make PROD start; make PROD stop
 # update TAG
 
+SHELL=/bin/bash
+
 BASEURL ?= https://127.0.0.1.sslip.io
 E2E_RUN = cd e2e; CYPRESS_BASE_URL=$(BASEURL)
 export ENV_FILE = .env
 
 export GIT_HASH := $(shell git rev-parse --short HEAD)
+export GIT_BRANCH := $(git symbolic-ref -q --short HEAD | sed -e 's|/|-|g')
+export COMPOSE_PROJECT_NAME := polis-${GIT_BRANCH}
 
 ifeq "$(origin TAG)" "undefined"
 	TAG := $(shell source $(ENV_FILE); echo $$TAG)
