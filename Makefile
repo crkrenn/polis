@@ -10,7 +10,7 @@ E2E_RUN = cd e2e; CYPRESS_BASE_URL=$(BASEURL)
 export ENV_FILE = .env
 
 export GIT_HASH := $(shell git rev-parse --short HEAD)
-export GIT_BRANCH := $(git symbolic-ref -q --short HEAD | sed -e 's|/|-|g')
+export GIT_BRANCH := $(shell git symbolic-ref -q --short HEAD | sed -e 's|/|-|g')
 export COMPOSE_PROJECT_NAME := polis-${GIT_BRANCH}
 
 ifeq "$(origin TAG)" "undefined"
@@ -19,7 +19,7 @@ endif
 export TAG
 
 PROD: ## Use with prod environment (use make PROD pull, etc.)
-    $(eval ENV_FILE = env.prod)
+	$(eval ENV_FILE = prod.env)
 	ifeq "$(origin TAG)" "undefined"
 		TAG := $(shell source $(ENV_FILE); echo $$TAG)
 	endif
