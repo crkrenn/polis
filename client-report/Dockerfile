@@ -3,7 +3,7 @@ FROM docker.io/node:11.15.0-alpine
 
 WORKDIR /app
 
-RUN apk add git --no-cache
+RUN apk add git openssh-client --no-cache
 
 COPY package*.json ./
 RUN npm ci
