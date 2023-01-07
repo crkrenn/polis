@@ -3,6 +3,7 @@
 # ported from `build-static-assets.clj` to solve problems with OS X builds
 
 import datetime
+import time
 import subprocess
 import sys
 import os
@@ -80,8 +81,6 @@ def clean_containers(client_dir):
   cmd_string = f"docker rm {container_name(client_dir)}"
   logged_command(cmd_string.split(" "), client_dir)
 
-
-
 # (defn build-and-cp-client
 def build_and_cp_client(client_dir):
   monitor_execution(build_client, client_dir)
@@ -96,7 +95,12 @@ def build_and_cp_client(client_dir):
 dir_list = ["client-admin", "client-report", "client-participation", ]
 dir_list = [ "client-report", ]
 for client_dir in dir_list:
+  start_time = time.time()
+  print(f"Building {client_dir}")
+  print(f"Start time: {datetime.datetime.now()}")
   build_and_cp_client(client_dir)
   print(f"Finished with {client_dir}")
+  print(f"Start time: {datetime.datetime.now()}")
+  print(f"Elapsed time: {time.time() - start_time} seconds.")
 
 # ;; QED
