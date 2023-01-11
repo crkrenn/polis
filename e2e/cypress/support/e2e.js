@@ -15,15 +15,15 @@
 
 import './commands'
 
-before(() => {
-  cy.fixture('users.json').then((users) => {
-    // Ensure a default user is present for each spec.
-    // TODO: Move this into a true database seeding process.
-    for (const [type, user] of Object.entries(users)) {
-      cy.signup(user.name, user.email, user.password)
-    }
-  })
-})
+// before(() => {
+//   cy.fixture('users.json').then((users) => {
+//     // Ensure a default user is present for each spec.
+//     // TODO: Move this into a true database seeding process.
+//     for (const [type, user] of Object.entries(users)) {
+//       cy.signup(user.name, user.email, user.password)
+//     }
+//   })
+// })
 
 // Register the log collector for logging activity to terminal.
 const reporterOptions = {
