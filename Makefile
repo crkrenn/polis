@@ -13,6 +13,10 @@ export S3_BUCKET = $(shell grep -e ^S3_BUCKET ${ENV_FILE} | awk -F'[=]' '{gsub(/
 export GIT_HASH = $(shell git rev-parse --short HEAD)
 export COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.dev.yml
 export COMPOSE_FILE_ARGS = -f docker-compose.yml
+export DOCKER_DETACHED=--detach
+
+ATTACHED: ## Run docker in "attached" mode, with output from all containers streaming to the terminal
+	$(eval undefine DOCKER_DETACHED)
 
 PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 	$(eval ENV_FILE = prod.env)
@@ -27,7 +31,7 @@ pull: echo_vars ## Pull most recent Docker container builds (nightlies)
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull
 
 start: echo_vars ## Start all Docker containers
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up
+	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}
 
 stop: echo_vars ## Stop all Docker containers
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
@@ -56,14 +60,14 @@ hash: ## Show current short hash
 	@echo Git hash: ${GIT_HASH}
 
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build
+	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 
 start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build
+	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build
+	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 
 extract-bundles: ## Extract bundles from file-server for cloud deployment
 	/bin/rm -rf build
@@ -114,5 +118,6 @@ help:
 	@echo 'where <command> is one of the following:'
 	@echo
 	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-
+	@echo
+	@echo 'Note: some targets (e.g. ATTACHED) require GNU Make version 3.82 or above.'
 .DEFAULT_GOAL := help
