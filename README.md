@@ -166,7 +166,7 @@ If your development machine is having trouble handling all of the docker contain
 Sometimes npm/docker get in a weird state, especially with native libs, and fail to recover gracefully.
 You may get a message like `Error: Cannot find module .... bcrypt`.
 
-If this happens to you, try following the instructions here: 
+If this happens to you, try following the instructions here:
 
 https://github.com/compdemocracy/polis/issues/1391
 
