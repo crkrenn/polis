@@ -39,6 +39,7 @@ services:
       - "postgres"
     build:
       context: ./math
+      dockerfile: Dockerfile
       labels:
         polis_tag: ${TAG}
     networks:

@@ -1,3 +1,7 @@
 prod.env
 dev.env
 docker_temp.env
+.cpcache/
+venv*/
+.terraform*
+__pycache__
