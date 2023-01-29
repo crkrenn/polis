@@ -1,2 +1,4 @@
 pyyaml
 google-cloud-artifact-registry
+boto3
+pydig

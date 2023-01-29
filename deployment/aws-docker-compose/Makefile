@@ -2,7 +2,12 @@ BASE_ENV ?= .env
 PROD_ENV ?= prod.env
 DEV_ENV ?= dev.env
 DOCKER_ENV ?= docker_temp.env
-DOCKER_COMPOSE_FILE ?= docker-compose.yml
+DOCKER_COMPOSE_FILE ?= ../../docker-compose.yml
+
+CLOUD_COMPOSE_FILE = cloud-compose.yaml
+EDITED_CLOUD_COMPOSE_FILE = cloud-compose-edit.yaml
+TEMP_JSON_FILE = temp.json
+EDITED_DOCKER_COMPOSE_FILE = docker-compose-edit.yaml
 
 export ENV_FILE = /dev/null
 export GIT_HASH = $(shell git rev-parse --short HEAD)
@@ -44,6 +49,12 @@ verify-project:
 		exit 1; \
 	fi
 
+verify-aws-region:
+	@if [ -z ${AWS_REGION} ]; then \
+		echo "ERROR: AWS_REGION not set"; \
+		exit 1; \
+	fi
+
 push-images: ## push images to AWS ECR
 	@make verify-project
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
@@ -54,9 +65,11 @@ push-images: ## push images to AWS ECR
 	touch push-images
 
 start-local: docker_env echo_vars ## Start all Docker containers on local machine
+	docker context use ${LOCAL_DOCKER_CONTEXT}; \
 	docker-compose --env-file ${DOCKER_ENV} up ${DOCKER_DETACHED}
 
 stop-local: docker_env echo_vars ## Start all Docker containers on local machine
+	docker context use ${LOCAL_DOCKER_CONTEXT}; \
 	docker-compose --env-file ${DOCKER_ENV} down ${DOCKER_DETACHED}
 
 stop-ALL:  ## Stop all running containers
@@ -71,111 +84,203 @@ build-docker-compose: ## build docker-compose
 	export TAG=${TAG}; \
 	../bin/build_docker_compose.py
 
+docker-login-aws: ## login to AWS ECR
+	make verify-aws-region
+	@echo logging into AWS ECR in ${AWS_REGION} region
+	docker login -u AWS -p $(shell aws ecr get-login-password --region ${AWS_REGION}) ${AWS_REPO}
 
 
+# docker-compose-edit: verify-aws-region ## update cloud compose file with custom features
+# 	export DEBUG=${DEBUG}; \
+# 	export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
+# 	export EDITED_DOCKER_COMPOSE_FILE=${EDITED_DOCKER_COMPOSE_FILE}; \
+# 	export BILLING_TAG=${BILLING_TAG}; \
+# 	export SERVICE_NAME=${SERVICE_NAME}; \
+# 	export AWS_REGION=${AWS_REGION}; \
+# 	export AWS_HOSTED_ZONE=${AWS_HOSTED_ZONE}; \
+# 	../bin/update_docker_compose.py
 
-# set-project:  ## set google cloud project to value in DEV/PROD env
-# 	make verify-project
-# 	echo "setting google project to ${GCP_PROJECT_ID}"
-# 	gcloud config set project ${GCP_PROJECT_ID}
-# 	touch set-project
+cloud-compose: docker-login-aws ## convert docker file to cloud compose file
+	@export AWS_REGION=${AWS_REGION}; \
+	docker context use ${CLOUD_DOCKER_CONTEXT}; \
+	docker compose \
+		--env-file ${DOCKER_ENV} \
+		convert > ${CLOUD_COMPOSE_FILE}
 
-# # create-repos: ## create google cloud repos
-# # 	make verify-project
-# # 	make set-project
-# # 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
-# # 	export GCP_REGION=${GCP_REGION}; \
-# # 	export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
-# # 	export DOCKER_REPO=${DOCKER_REPO}; \
-# # 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
-# # 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-# # 	../bin/create_repos.py
-# # 	touch create-repos
+cloud-compose-edit: cloud-compose ## update cloud compose file with custom features
+	export DEBUG=${DEBUG}; \
+	export CLOUD_COMPOSE_FILE=${CLOUD_COMPOSE_FILE}; \
+	export EDITED_CLOUD_COMPOSE_FILE=${EDITED_CLOUD_COMPOSE_FILE}; \
+	export BILLING_TAG=${BILLING_TAG}; \
+	export SERVICE_NAME=${SERVICE_NAME}; \
+	export AWS_REGION=${AWS_REGION}; \
+	export AWS_HOSTED_ZONE=${AWS_HOSTED_ZONE}; \
+	# export SSL_CERTIFICATE=`aws acm request-certificate \
+	# 	--domain-name ${SERVICE_NAME}. \
+	# 	--validation-method DNS | \
+	# 	jq -r ".CertificateArn"` ; \
+	../bin/update_cloud_compose.py
 
-# authorize-dockerhub: ## connect google cloud to dockerhub
-# 	make verify-project
-# 	make set-project
-# 	@echo "attempting to connect google cloud to dockerhub";
-# 	@echo "deleting old secrets (if they exist)";
-# 	-gcloud secrets delete docker-repo --quiet
-# 	-gcloud secrets delete docker-login --quiet
-# 	-gcloud secrets delete docker-password --quiet
-# 	@echo "using terraform to create new secrets";
-# 	@cd ../terraform/gcp_secrets; \
-# 	terraform init; \
-# 	export TF_VAR_GCP_REGION=${GCP_REGION} ; \
-# 	export TF_VAR_GCP_PROJECT_ID=${GCP_PROJECT_ID} ; \
-# 	export TF_VAR_GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER} ; \
-# 	export TF_VAR_DOCKER_REPO=${DOCKER_REPO} ; \
-# 	export TF_VAR_DOCKER_LOGIN=${DOCKER_LOGIN} ; \
-# 	export TF_VAR_DOCKER_PASSWORD=${DOCKER_PASSWORD} ; \
-# 	terraform apply -auto-approve
-# 	touch authorize-dockerhub
+create-stack: cloud-compose-edit ## launch updated cloud compose file
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation create-stack \
+		--stack-name ${SERVICE_NAME}-stack \
+		--template-body file://${EDITED_CLOUD_COMPOSE_FILE} \
+		--region ${AWS_REGION} \
+		--capabilities CAPABILITY_IAM
 
-# build-images: ## build polis images and push to google cloud repos (~60 min)
-# 	make verify-project
-# 	make set-project
-# 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
-# 	export TAG=${TAG}; \
-# 	export GCP_REGION=${GCP_REGION}; \
-# 	export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
-# 	export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
-# 	export DOCKER_REPO=${DOCKER_REPO}; \
-# 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
-# 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-# 	../bin/build_images.py
-# 	cd ../.. ; \
-# 	gcloud builds submit \
-# 		--region=${GCP_REGION} \
-# 		--config=deployment/gcp-build-images/cloudbuild.yaml
+update-stack: cloud-compose-edit ## update stack with current cloud compose file
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation update-stack \
+		--stack-name ${SERVICE_NAME}-stack \
+		--template-body file://${EDITED_CLOUD_COMPOSE_FILE} \
+		--region ${AWS_REGION} \
+		--capabilities CAPABILITY_IAM
 
-# # @echo "activating google cloud secrets manager (rerun if fails)"
-# # @gcloud services enable secretmanager.googleapis.com
-# # @echo ${DOCKER_LOGIN} | gcloud secrets update docker-login --data-file=- \
-# # 		--replication-policy=user-managed \
-# # 		--locations=${GCP_REGION}
-# # @echo ${DOCKER_PASSWORD} | gcloud secrets create docker-password --data-file=- \
-# # 		--replication-policy=user-managed \
-# # 		--locations=${GCP_REGION}
+describe-stack: verify-aws-region ## describe stack
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation list-stack-resources \
+		--stack-name ${SERVICE_NAME}-stack \
 
-# # add-ssl-cert-tf: ## create and validate ssl certificate with terraform
+stack-status: verify-aws-region ## summary of stack status
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation list-stack-resources \
+		--stack-name ${SERVICE_NAME}-stack | \
+		grep -e LogicalResourceId -e ResourceStatus
+
+stack-url: verify-aws-region ## get URL of stack load balancer
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation describe-stack-resource \
+		--stack-name ${SERVICE_NAME}-stack \
+		--logical-resource-id LoadBalancer | \
+		jq '.StackResourceDetail.PhysicalResourceId' | \
+		xargs aws elbv2 describe-load-balancers --load-balancer-arns | \
+		jq -r '"http://" + (.LoadBalancers | .[0] | .DNSName)'
+
+detect-stack-drift: cloud-compose-edit ## detect stack drift
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation detect-stack-drift \
+		--stack-name ${SERVICE_NAME}-stack
+
+delete-stack:  verify-aws-region ## delete running stack
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation delete-stack --stack-name ${SERVICE_NAME}-stack
+
+
+# #!/usr/../bin/env make
+
+# # TTD: add update stack
+# # TTD: add certificate, etc.
+# # add make for route53
+
+# # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html
+# # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenercertificate.html
+# #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
+
+# DOT_ENV ?= .env
+# PROD_ENV ?= prod.env
+# DOCKER_ENV ?= docker_temp.env
+
+# include ${DOT_ENV}
+# export $(shell sed 's/=.*//' ${DOT_ENV})
+# $(shell cat ${DOT_ENV} > ${DOCKER_ENV})
+
+# ifneq ("$(wildcard $(PROD_ENV))","")
+#   $(shell cat ${PROD_ENV} >> ${DOCKER_ENV})
+#   include ${PROD_ENV}
+#   export $(shell sed 's/=.*//' ${PROD_ENV})
+# endif
+
+
+# export DEBUG=false
+
+# DEBUG: ## Run tools in DEBUG, with more diagnostic outputs
+# 	$(eval DEBUG=true)
+
+# # load_balancer:
 # # 	-@echo "attempting to create aws load balancer"; \
-# # 	cd terraform_ssl; \
+# # 	cd terraform; \
 # # 	terraform init; \
-# # 	export TF_VAR_DEBUG=${DEBUG}; \
+# #   export TF_VAR_DEBUG=${DEBUG}; \
 # # 	export TF_VAR_service_name=${SERVICE_NAME}; \
 # # 	export TF_VAR_hosted_zone=${AWS_HOSTED_ZONE}; \
-# # 	export TF_VAR_hosted_zone_id=${AWS_HOSTED_ZONE_ID}; \
-
+# # 	export TF_VAR_s3_bucket=${S3_BUCKET}; \
+# # 	export TF_VAR_billing_tag=${BILLING_TAG}; \
 # # 	terraform plan
 
-# # gcloud secrets create SECRET [--data-file=PATH] [--labels=[KEY=VALUE,...]]
-# #     [--set-annotations=[KEY=VALUE,...]] [--topics=[TOPICS,...]]
-# #     [--expire-time=EXPIRE-TIME | --ttl=TTL]
-# #     [--next-rotation-time=NEXT_ROTATION_TIME
-# #       --rotation-period=ROTATION_PERIOD]
-# #     [--replication-policy-file=REPLICATION-POLICY-FILE
-# #       | --kms-key-name=KMS-KEY-NAME
-# #       --locations=[LOCATION,...] --replication-policy=POLICY]
-# #     [GCLOUD_WIDE_FLAG ...]
+# add-ssl-cert-tf: ## create and validate ssl certificate with terraform
+# 	-@echo "attempting to create aws load balancer"; \
+# 	cd terraform_ssl; \
+# 	terraform init; \
+# 	export TF_VAR_DEBUG=${DEBUG}; \
+# 	export TF_VAR_service_name=${SERVICE_NAME}; \
+# 	export TF_VAR_hosted_zone=${AWS_HOSTED_ZONE}; \
+# 	export TF_VAR_hosted_zone_id=${AWS_HOSTED_ZONE_ID}; \
 
-# # gcloud secrets update SECRET [--etag=ETAG]
-# # [--update-labels=[KEY=VALUE,...]]
-# # [--add-topics=[ADD-TOPICS,...] | --clear-topics
-# #   | --remove-topics=[REMOVE-TOPICS,...]]
-# # [--clear-annotations | --remove-annotations=[KEY,...]
-# #   | --update-annotations=[KEY=VALUE,...]]
-# # [--clear-labels | --remove-labels=[KEY,...]]
-# # [--clear-version-aliases | --remove-version-aliases=[KEY,...]
-# #   | --update-version-aliases=[KEY=VALUE,...]]
-# # [--expire-time=EXPIRE-TIME | --remove-expiration | --ttl=TTL]
-# # [--next-rotation-time=NEXT_ROTATION_TIME --remove-next-rotation-time
-# #   --remove-rotation-period
-# #   --remove-rotation-schedule --rotation-period=ROTATION_PERIOD]
-# # [GCLOUD_WIDE_FLAG ...]
+# 	terraform plan
+
+# dns_input:
+# 	@jq --null-input \
+# 	--arg user "${AWS_REGION}" \
+# 	--arg password "${AWS_HOSTED_ZONE}" \
+# 	'{ \
+# 		"Comment": "CREATE/DELETE/UPSERT a record ", \
+# 		"Changes": [{ \
+# 		"Action": "CREATE", \
+# 					"ResourceRecordSet": { \
+# 								"Name": "a.example.com", \
+# 								"Type": "A", \
+# 								"TTL": 300, \
+# 							"ResourceRecords": [{ "Value": "4.4.4.4"}] \
+# 		}}] \
+# 	}' > ${TEMP_JSON_FILE}; \
+# 	cat ${TEMP_JSON_FILE}
+# # $ aws route53 change-resource-record-sets --hosted-zone-id ZXXXXXXXXXX --change-batch file://sample.json
+
+# # -import_dns:
+# # -       -@echo "attempting to authenticate with aws dns"; \
+# # -       cd terraform; \
+# # -       terraform init; \
+# #   export TF_VAR_DEBUG=${DEBUG}; \
+# # -       export TFVAR_aws_root_domain=${AWS_ROOT_DOMAIN}; \
+# # -       terraform import aws_route53_zone.root ${AWS_HOSTED_ZONE_ID}
+
+
+
+
+# add-ssl-cert:  ## update-stack add ssl certificate to load balancer
+# 	@export DEBUG=${DEBUG}; \
+# 	export SERVICE_NAME=${SERVICE_NAME}; \
+# 	export AWS_REGION=${AWS_REGION}; \
+# 	export AWS_HOSTED_ZONE=${AWS_HOSTED_ZONE}; \
+# 	export STACK_NAME=${SERVICE_NAME}-stack; \
+# 	../bin/add_ssl_certificate.py
+
+# noop:
+# #   export TF_VAR_DEBUG=${DEBUG}; \
+# 	export LOAD_BALANCER_ARN=`aws cloudformation list-stack-resources \
+# 		--stack-name ${SERVICE_NAME}-stack`; \
+# 	aws elbv2 add-listener-certificates \
+# 	--listener-arn arn:aws:elasticloadbalancing:us-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2 --certificates CertificateArn=arn:aws:acm:us-west-2:123456789012:certificate/5cc54884-f4a3-4072-80be-05b9ba72f705
+# 	aws acm request-certificate  \
+# 			@aws cloudformation list-stack-resources \
+# 		--stack-name ${SERVICE_NAME}-stack \
+# 	echo $$SSL_CERTIFICATE_ARN; \
+
+
+# help:
+# 	@echo 'Usage: make <command>'
+# 	@echo
+# 	@echo 'where <command> is one of the following:'
+# 	@echo
+# 	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+# 	@echo
+# 	@echo 'Note: some targets (e.g. ATTACHED) require GNU Make version 3.82 or above.'
+# .DEFAULT_GOAL := help
 
 echo_vars: docker_env
 	@echo TAG=${TAG}
+
 
 help:
 	@echo 'Usage: make <command>'

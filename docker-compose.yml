@@ -94,6 +94,8 @@ services:
 
 networks:
   polis-net:
+    driver: bridge # a user defined bridge is required for aws deployment;
+                   # the default bridge network doesn't support name resolution
 
 volumes:
   backups:

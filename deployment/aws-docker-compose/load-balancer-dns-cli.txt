@@ -1,0 +1,29 @@
+{
+  "Comment": "Creating Alias resource record sets in Route 53",
+  "Changes": [
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "elb.example.com",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "Z1H1FL5HABSF5",
+          "DNSName": "ALB-xxxxxxxx.us-west-2.elb.amazonaws.com",
+          "EvaluateTargetHealth": false
+        }
+      }
+    }
+  ]
+}
+Next, use a change-resource-record-sets command to create your resource record set in a hosted zone. The values for record creation are specified in the JSON configuration file that you created previously.
+
+Modify the following command for your configuration. For the --hosted-zone-id, provide your hosted zone ID for the domain name:
+
+$ aws route53 change-resource-record-sets --hosted-zone-id ZXXXXXXXXXX --change-batch file://sample.json
+Elastic Load Balancing settings
+
+If you're pointing to a load balancer, always include dualstack in the value for the DNSName key-value pair of the JSON file. For example, if your load balancer's Amazon-provided DNS name is ALB-xxxxxxxx.us-west-2.elb.amazonaws.com, use:
+
+"DNSName": "dualstack.ALB-xxxxxxxx.us-west-2.elb.amazonaws.com"
+
+https://aws.amazon.com/premiumsupport/knowledge-center/alias-resource-record-set-route53-cli/
