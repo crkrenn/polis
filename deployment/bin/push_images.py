@@ -9,6 +9,7 @@ import pprint
 from common import call_cmd
 
 import logging
+import datetime
 
 class DeltaTimeFormatter(logging.Formatter):
     def format(self, record):

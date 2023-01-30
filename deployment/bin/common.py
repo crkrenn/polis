@@ -4,7 +4,7 @@ import copy
 import subprocess
 
 import logging
-
+import datetime
 class DeltaTimeFormatter(logging.Formatter):
     def format(self, record):
         duration = datetime.datetime.utcfromtimestamp(record.relativeCreated / 1000)
