@@ -5,9 +5,10 @@ import os
 import yaml
 import subprocess
 import pprint
-import logging
 
 from common import call_cmd
+
+import logging
 
 FORMAT = '%(asctime)s %(module)s %(levelname)s %(message)s'
 logging.basicConfig(format=FORMAT)

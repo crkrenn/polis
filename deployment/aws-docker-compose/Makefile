@@ -61,6 +61,7 @@ push-images: ## push images to AWS ECR
 	export TAG=${TAG}; \
 	export IMAGE_REPO=${IMAGE_REPO}; \
 	export AWS_REGION=${AWS_REGION}; \
+	docker context use ${LOCAL_DOCKER_CONTEXT}; \
 	../bin/push_images.py
 	touch push-images
 
@@ -161,6 +162,14 @@ detect-stack-drift: cloud-compose-edit ## detect stack drift
 	@export AWS_REGION=${AWS_REGION}; \
 	aws cloudformation detect-stack-drift \
 		--stack-name ${SERVICE_NAME}-stack
+
+show-stack-drift: cloud-compose-edit ## show stack drift summary
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation list-stack-resources \
+		--stack-name ${SERVICE_NAME}-stack | \
+		grep -e StackResourceDriftStatus -e LogicalResourceId | \
+		grep -B1 -e "StackResourceDriftStatus.*MODIFIED" \
+			-e "StackResourceDriftStatus.*NOT"
 
 delete-stack:  verify-aws-region ## delete running stack
 	@export AWS_REGION=${AWS_REGION}; \
