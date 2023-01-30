@@ -7,3 +7,5 @@ https://cloud.google.com/build/docs/interacting-with-dockerhub-images
             --replication-policy=user-managed \
             --locations=us-central1,us-east1
 figure out build/env variables docker-compose and dockerfile
+repeat 5 { sleep 1; date} | ts -s "%.S || %H:%M:%S ||"  
+add timestamps to next build

@@ -5,3 +5,4 @@ docker_temp.env
 venv*/
 .terraform*
 __pycache__
+polis.config.js

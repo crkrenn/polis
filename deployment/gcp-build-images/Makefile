@@ -15,15 +15,23 @@ PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 	$(eval ENV_FILE = prod.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
+	@echo "Copying polis.config.js (if present) to client-directories"
+	@-cp ../../polis.config.js ../../client-participation
+	@-cp ../../polis.config.js ../../client-admin
+	@-cp ../../polis.config.js ../../client-report
 
 DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
 	@echo Running in dev mode
 	$(eval ENV_FILE = dev.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
+	@echo "Copying polis.config.js (if present) to client-directories"
+	@-cp ../../polis.config.js ../../client-participation
+	@-cp ../../polis.config.js ../../client-admin
+	@-cp ../../polis.config.js ../../client-report
 
-clean: ## reset create-repos and authorize-dockerhub, so they will be rerun
-	@rm -f create-repos authorize-dockerhub
+# clean: ## reset create-repos and authorize-dockerhub, so they will be rerun
+# 	@rm -f create-repos authorize-dockerhub
 
 docker_env:
 	$(shell cat ${BASE_ENV} > ${DOCKER_ENV})
@@ -43,7 +51,6 @@ set-project:  ## set google cloud project to value in DEV/PROD env
 	make verify-project
 	echo "setting google project to ${GCP_PROJECT_ID}"
 	gcloud config set project ${GCP_PROJECT_ID}
-	touch set-project
 
 # create-repos: ## create google cloud repos
 # 	make verify-project
@@ -57,25 +64,25 @@ set-project:  ## set google cloud project to value in DEV/PROD env
 # 	../bin/create_repos.py
 # 	touch create-repos
 
-authorize-dockerhub: ## connect google cloud to dockerhub
-	make verify-project
-	make set-project
-	@echo "attempting to connect google cloud to dockerhub";
-	@echo "deleting old secrets (if they exist)";
-	-gcloud secrets delete docker-repo --quiet
-	-gcloud secrets delete docker-login --quiet
-	-gcloud secrets delete docker-password --quiet
-	@echo "using terraform to create new secrets";
-	@cd ../terraform/gcp_secrets; \
-	terraform init; \
-	export TF_VAR_GCP_REGION=${GCP_REGION} ; \
-	export TF_VAR_GCP_PROJECT_ID=${GCP_PROJECT_ID} ; \
-	export TF_VAR_GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER} ; \
-	export TF_VAR_DOCKER_REPO=${DOCKER_REPO} ; \
-	export TF_VAR_DOCKER_LOGIN=${DOCKER_LOGIN} ; \
-	export TF_VAR_DOCKER_PASSWORD=${DOCKER_PASSWORD} ; \
-	terraform apply -auto-approve
-	touch authorize-dockerhub
+# authorize-dockerhub: ## connect google cloud to dockerhub
+# 	make verify-project
+# 	make set-project
+# 	@echo "attempting to connect google cloud to dockerhub";
+# 	@echo "deleting old secrets (if they exist)";
+# 	-gcloud secrets delete docker-repo --quiet
+# 	-gcloud secrets delete docker-login --quiet
+# 	-gcloud secrets delete docker-password --quiet
+# 	@echo "using terraform to create new secrets";
+# 	@cd ../terraform/gcp_secrets; \
+# 	terraform init; \
+# 	export TF_VAR_GCP_REGION=${GCP_REGION} ; \
+# 	export TF_VAR_GCP_PROJECT_ID=${GCP_PROJECT_ID} ; \
+# 	export TF_VAR_GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER} ; \
+# 	export TF_VAR_DOCKER_REPO=${DOCKER_REPO} ; \
+# 	export TF_VAR_DOCKER_LOGIN=${DOCKER_LOGIN} ; \
+# 	export TF_VAR_DOCKER_PASSWORD=${DOCKER_PASSWORD} ; \
+# 	terraform apply -auto-approve
+# 	touch authorize-dockerhub
 
 build-images: ## build polis images and push to google cloud repos (~60 min)
 	make verify-project
@@ -148,7 +155,7 @@ help:
 	@echo 'where <command> is one of the following:'
 	@echo
 	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo
-	@echo 'Note: set-project, create-repos, & authorize-dockerhub are "sticky" commands.'
-	@echo '      They will be run once, and then not run again unless you run "make clean" first.'
+	# @echo
+	# @echo 'Note: set-project, create-repos, & authorize-dockerhub are "sticky" commands.'
+	# @echo '      They will be run once, and then not run again unless you run "make clean" first.'
 .DEFAULT_GOAL := help
