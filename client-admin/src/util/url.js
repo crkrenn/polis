@@ -2,7 +2,7 @@
 
 // build may prepend 'devWithPreprod'
 
-let urlPrefix = '_domainWhitelistError_'
+let urlPrefix = '_adminDomainWhitelistError_'
 
 const wl = window.domainWhitelist.map(function (x) {
   return new RegExp(x)

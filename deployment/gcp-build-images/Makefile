@@ -99,7 +99,8 @@ build-images: ## build polis images and push to google cloud repos (~60 min)
 	cd ../.. ; \
 	gcloud builds submit \
 		--region=${GCP_REGION} \
-		--config=deployment/gcp-build-images/cloudbuild.yaml
+		--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
+	ts -s "%.s || %H:%M:%S ||"
 
 # @echo "activating google cloud secrets manager (rerun if fails)"
 # @gcloud services enable secretmanager.googleapis.com
@@ -155,7 +156,5 @@ help:
 	@echo 'where <command> is one of the following:'
 	@echo
 	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	# @echo
-	# @echo 'Note: set-project, create-repos, & authorize-dockerhub are "sticky" commands.'
-	# @echo '      They will be run once, and then not run again unless you run "make clean" first.'
+	@echo
 .DEFAULT_GOAL := help

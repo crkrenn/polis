@@ -10,8 +10,19 @@ from common import call_cmd
 
 import logging
 
-FORMAT = '%(asctime)s %(module)s %(levelname)s %(message)s'
-logging.basicConfig(format=FORMAT)
+class DeltaTimeFormatter(logging.Formatter):
+    def format(self, record):
+        duration = datetime.datetime.utcfromtimestamp(record.relativeCreated / 1000)
+        record.delta = duration.strftime("%H:%M:%S")
+        return super().format(record)
+
+# add custom formatter to root logger
+handler = logging.StreamHandler()
+LOGFORMAT = '+%(delta)s - %(asctime)s - %(module)s %(levelname)-9s: %(message)s'
+fmt = DeltaTimeFormatter(LOGFORMAT)
+handler.setFormatter(fmt)
+logging.getLogger().addHandler(handler)
+
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
