@@ -36,3 +36,4 @@ apt install pkg-config
 
 cargo install --locked gptcommit
 echo "type 'gptcommit install' and follow api key instructions"
+apt install moreutils

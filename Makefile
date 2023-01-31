@@ -104,4 +104,5 @@ help:
 	@echo
 	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo
+	@echo "Use 'make <target> | ts -s '%.s || %H:%M:%S ||' to diagnose build performance"
 .DEFAULT_GOAL := help
