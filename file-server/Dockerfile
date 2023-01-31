@@ -53,19 +53,19 @@ ARG BABEL_ENV=production
 RUN npm run build:prod
 
 
-# polis-client-report
-# Gulp v3 stops us from upgrading beyond Node v11
-FROM client-base AS client-report
+# # polis-client-report
+# # Gulp v3 stops us from upgrading beyond Node v11
+# FROM client-base AS client-report
 
-WORKDIR /client-report/app
+# WORKDIR /client-report/app
 
-COPY client-report/package*.json ./
-# This should be working with `npm ci`, but isn't; Need to debug
-RUN npm install
+# COPY client-report/package*.json ./
+# # This should be working with `npm ci`, but isn't; Need to debug
+# RUN npm install
 
-COPY client-report/polis.config.template.js polis.config.js
-# If polis.config.js exists on host, will override template here.
-COPY client-report/. .
+# COPY client-report/polis.config.template.js polis.config.js
+# # If polis.config.js exists on host, will override template here.
+# COPY client-report/. .
 
 ARG GIT_HASH
 RUN npm run deploy:prod
@@ -89,7 +89,7 @@ COPY file-server/. .
 RUN mkdir /app/build
 COPY --from=client-admin         /client-admin/app/build/         /app/build
 COPY --from=client-participation /client-participation/app/dist/  /app/build
-COPY --from=client-report        /client-report/app/build/        /app/build
+# COPY --from=client-report        /client-report/app/build/        /app/build
 
 EXPOSE 8080
 
