@@ -2,7 +2,7 @@
 
 // build may prepend 'devWithPreprod'
 
-var urlPrefix = "_participationDomainWhitelistError_";
+var urlPrefix = '_participationDomainWhitelistError_' + document.domain + "_"
 
 var wl = window.domainWhitelist.map(function(x) {
   return new RegExp(x);

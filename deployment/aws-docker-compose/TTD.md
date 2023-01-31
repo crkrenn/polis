@@ -8,3 +8,6 @@ https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-ba
 cloudformation creates an application load balancer
 
 https://www.google.com/search?q=aws+ecs+prevent+503+service+temporarily+unavailable&oq=aws+ecs+prevent+503&aqs=chrome.3.69i57j33i160l2j33i22i29i30.19857j0j4&sourceid=chrome&ie=UTF-8
+
+plan: remove all entries from whitelist?
+plan: add diagnostic for whitelist that includes URL.
