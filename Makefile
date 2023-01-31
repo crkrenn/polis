@@ -28,14 +28,14 @@ echo_vars:
 	@echo TAG=${TAG}
 
 pull: echo_vars ## Pull most recent Docker container builds (nightlies)
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull
 
 start: echo_vars ## Start all Docker containers
 	@echo 'detached mode: ${DOCKER_DETACHED}'
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}
 
 stop: echo_vars ## Stop all Docker containers
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
 
 rm-containers: echo_vars ## Remove Docker containers where (polis_tag="${TAG}")
 	@echo 'removing filtered containers (polis_tag="${TAG}")'
@@ -61,6 +61,7 @@ hash: ## Show current short hash
 	@echo Git hash: ${GIT_HASH}
 
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
+<<<<<<< HEAD
 	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 
@@ -73,6 +74,16 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
 	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+=======
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+
+start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --detach --build
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+>>>>>>> 20e14140dc78198cb12a00964ed7f9223adfc5a5
 
 e2e-install: e2e/node_modules ## Install Cypress E2E testing tools
 	$(E2E_RUN) npm install
@@ -113,4 +124,5 @@ help:
 	@echo
 	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo
+	@echo "Use 'make <target> | ts -s '%.s || %H:%M:%S ||' to diagnose build performance"
 .DEFAULT_GOAL := help
