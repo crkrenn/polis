@@ -11,3 +11,5 @@ https://www.google.com/search?q=aws+ecs+prevent+503+service+temporarily+unavaila
 
 plan: remove all entries from whitelist?
 plan: add diagnostic for whitelist that includes URL.
+
+add whitelist content to URL error message
