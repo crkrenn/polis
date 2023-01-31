@@ -40,7 +40,7 @@ RUN npm install -g npm@6.9.2
 COPY client-participation/package*.json ./
 
 # It would be nice if this was ci, but misbehaving for some reason
-RUN npm ci
+RUN npm install
 
 COPY client-participation/polis.config.template.js polis.config.js
 # If polis.config.js exists on host, will override template here.
