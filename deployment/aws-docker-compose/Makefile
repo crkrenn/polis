@@ -76,7 +76,7 @@ stop-local: docker_env echo_vars ## Start all Docker containers on local machine
 stop-ALL:  ## Stop all running containers
 	@-docker container stop $(shell docker container ls -q)
 
-build-docker-compose: ## build docker-compose
+build-docker-compose: docker_env ## build docker-compose
 	@make verify-project
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
 	export GCP_REGION=${GCP_REGION}; \
@@ -101,7 +101,7 @@ docker-login-aws: ## login to AWS ECR
 # 	export AWS_HOSTED_ZONE=${AWS_HOSTED_ZONE}; \
 # 	../bin/update_docker_compose.py
 
-cloud-compose: docker-login-aws ## convert docker file to cloud compose file
+cloud-compose: docker-login-aws docker_env ## convert docker file to cloud compose file
 	@export AWS_REGION=${AWS_REGION}; \
 	docker context use ${CLOUD_DOCKER_CONTEXT}; \
 	docker compose \

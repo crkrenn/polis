@@ -158,3 +158,4 @@ help:
 	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo
 .DEFAULT_GOAL := help
+# [1]+  Stopped                 make start-FULL-REBUILD | ts '%H:%M:%S ||' | ts -s '%H:%M:%S ||'
