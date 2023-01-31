@@ -55,6 +55,15 @@ verify-aws-region:
 		exit 1; \
 	fi
 
+delete-gcp-images: ## delete gcp images
+	@make verify-project
+	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
+	export TAG=${TAG}; \
+	export IMAGE_REPO=${IMAGE_REPO}; \
+	export AWS_REGION=${AWS_REGION}; \
+	docker context use ${LOCAL_DOCKER_CONTEXT}; \
+	../bin/delete_images.py
+
 push-images: ## push images to AWS ECR
 	@make verify-project
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
@@ -144,10 +153,18 @@ describe-stack: verify-aws-region ## describe stack
 		--stack-name ${SERVICE_NAME}-stack \
 
 stack-status: verify-aws-region ## summary of stack status
+	@echo "All complete except:"
 	@export AWS_REGION=${AWS_REGION}; \
 	aws cloudformation list-stack-resources \
 		--stack-name ${SERVICE_NAME}-stack | \
 		grep -e LogicalResourceId -e ResourceStatus
+
+noop:
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation list-stack-resources \
+		--stack-name ${SERVICE_NAME}-stack | \
+		grep -e ResourceStatus -e LogicalResourceId | \
+		grep -v -B1 -e "COMPLETE"
 
 stack-url: verify-aws-region ## get URL of stack load balancer
 	@export AWS_REGION=${AWS_REGION}; \

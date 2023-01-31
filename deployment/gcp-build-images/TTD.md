@@ -9,3 +9,7 @@ https://cloud.google.com/build/docs/interacting-with-dockerhub-images
 figure out build/env variables docker-compose and dockerfile
 repeat 5 { sleep 1; date} | ts -s "%.S || %H:%M:%S ||"  
 add timestamps to next build
+
+add sed commands to makefile
+ 2786  sed -i"" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" client-*/Dockerfile
+ 2789  sed -i "" -e "s/#COPY polis.config.template.js/COPY polis.config.template.js/" client-*/Dockerfile

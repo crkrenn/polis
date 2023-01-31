@@ -10,25 +10,44 @@ DOCKER_COMPOSE_FILE = ../../docker-compose.yml
 include ${BASE_ENV}
 export $(shell sed 's/=.*//' ${BASE_ENV})
 
+update_polis_config: ## Copy polis.config.js to client-* directories
+	@echo "Copying polis.config.js (if present) to client-* directories"
+	@echo "Renaming polis.config.template.js to polis.config.template.js.bak"
+	@-cp ../../polis.config.js ../../client-participation
+	@-cp ../../polis.config.js ../../client-admin
+	@-cp ../../polis.config.js ../../client-report
+	@-mv ../../client-participation/polis.config.template.js \
+		../../client-participation/polis.config.template.js.bak
+	@-mv ../../client-admin/polis.config.template.js \
+		../../client-admin/polis.config.template.js.bak
+	@-mv ../../client-report/polis.config.template.js \
+		../../client-report/polis.config.template.js.bak
+	@-sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
+		../../client-*/Dockerfile
+
+revert_polis_config: ## Revert polis.config.js in client-* directories
+	@echo "Deleting polis.config.js (if present) in client-* directories"
+	@-rm ../../client-*/polis.config.js
+	@-mv ../../client-participation/polis.config.template.js.bak \
+		../../client-participation/polis.config.template.js
+	@-mv ../../client-admin/polis.config.template.js.bak \
+		../../client-admin/polis.config.template.js
+	@-mv ../../client-report/polis.config.template.js.bak \
+		../../client-report/polis.config.template.js
+	@-sed -i "" -e "s/#COPY polis.config.template.js/COPY polis.config.template.js/" \
+		../../client-*/Dockerfile
+
 PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 	@echo Running in prod mode
 	$(eval ENV_FILE = prod.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
-	@echo "Copying polis.config.js (if present) to client-directories"
-	@-cp ../../polis.config.js ../../client-participation
-	@-cp ../../polis.config.js ../../client-admin
-	@-cp ../../polis.config.js ../../client-report
 
 DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
 	@echo Running in dev mode
 	$(eval ENV_FILE = dev.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
-	@echo "Copying polis.config.js (if present) to client-directories"
-	@-cp ../../polis.config.js ../../client-participation
-	@-cp ../../polis.config.js ../../client-admin
-	@-cp ../../polis.config.js ../../client-report
 
 # clean: ## reset create-repos and authorize-dockerhub, so they will be rerun
 # 	@rm -f create-repos authorize-dockerhub
@@ -52,41 +71,10 @@ set-project:  ## set google cloud project to value in DEV/PROD env
 	echo "setting google project to ${GCP_PROJECT_ID}"
 	gcloud config set project ${GCP_PROJECT_ID}
 
-# create-repos: ## create google cloud repos
-# 	make verify-project
-# 	make set-project
-# 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
-# 	export GCP_REGION=${GCP_REGION}; \
-# 	export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
-# 	export DOCKER_REPO=${DOCKER_REPO}; \
-# 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
-# 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-# 	../bin/create_repos.py
-# 	touch create-repos
-
-# authorize-dockerhub: ## connect google cloud to dockerhub
-# 	make verify-project
-# 	make set-project
-# 	@echo "attempting to connect google cloud to dockerhub";
-# 	@echo "deleting old secrets (if they exist)";
-# 	-gcloud secrets delete docker-repo --quiet
-# 	-gcloud secrets delete docker-login --quiet
-# 	-gcloud secrets delete docker-password --quiet
-# 	@echo "using terraform to create new secrets";
-# 	@cd ../terraform/gcp_secrets; \
-# 	terraform init; \
-# 	export TF_VAR_GCP_REGION=${GCP_REGION} ; \
-# 	export TF_VAR_GCP_PROJECT_ID=${GCP_PROJECT_ID} ; \
-# 	export TF_VAR_GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER} ; \
-# 	export TF_VAR_DOCKER_REPO=${DOCKER_REPO} ; \
-# 	export TF_VAR_DOCKER_LOGIN=${DOCKER_LOGIN} ; \
-# 	export TF_VAR_DOCKER_PASSWORD=${DOCKER_PASSWORD} ; \
-# 	terraform apply -auto-approve
-# 	touch authorize-dockerhub
-
 build-images: ## build polis images and push to google cloud repos (~60 min)
 	make verify-project
 	make set-project
+	make update_polis_config
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
 	export TAG=${TAG}; \
 	export GCP_REGION=${GCP_REGION}; \
@@ -101,6 +89,21 @@ build-images: ## build polis images and push to google cloud repos (~60 min)
 		--region=${GCP_REGION} \
 		--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
 	ts -s "%.s || %H:%M:%S ||"
+	make revert_polis_config
+
+
+echo_vars: docker_env
+	@echo TAG=${TAG}
+
+help:
+	@echo 'Usage: make <command>'
+	@echo
+	@echo 'where <command> is one of the following:'
+	@echo
+	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo
+.DEFAULT_GOAL := help
+
 
 # @echo "activating google cloud secrets manager (rerun if fails)"
 # @gcloud services enable secretmanager.googleapis.com
@@ -147,15 +150,37 @@ build-images: ## build polis images and push to google cloud repos (~60 min)
 #   --remove-rotation-schedule --rotation-period=ROTATION_PERIOD]
 # [GCLOUD_WIDE_FLAG ...]
 
-echo_vars: docker_env
-	@echo TAG=${TAG}
 
-help:
-	@echo 'Usage: make <command>'
-	@echo
-	@echo 'where <command> is one of the following:'
-	@echo
-	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo
-.DEFAULT_GOAL := help
 # [1]+  Stopped                 make start-FULL-REBUILD | ts '%H:%M:%S ||' | ts -s '%H:%M:%S ||'
+
+# create-repos: ## create google cloud repos
+# 	make verify-project
+# 	make set-project
+# 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
+# 	export GCP_REGION=${GCP_REGION}; \
+# 	export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
+# 	export DOCKER_REPO=${DOCKER_REPO}; \
+# 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
+# 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
+# 	../bin/create_repos.py
+# 	touch create-repos
+
+# authorize-dockerhub: ## connect google cloud to dockerhub
+# 	make verify-project
+# 	make set-project
+# 	@echo "attempting to connect google cloud to dockerhub";
+# 	@echo "deleting old secrets (if they exist)";
+# 	-gcloud secrets delete docker-repo --quiet
+# 	-gcloud secrets delete docker-login --quiet
+# 	-gcloud secrets delete docker-password --quiet
+# 	@echo "using terraform to create new secrets";
+# 	@cd ../terraform/gcp_secrets; \
+# 	terraform init; \
+# 	export TF_VAR_GCP_REGION=${GCP_REGION} ; \
+# 	export TF_VAR_GCP_PROJECT_ID=${GCP_PROJECT_ID} ; \
+# 	export TF_VAR_GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER} ; \
+# 	export TF_VAR_DOCKER_REPO=${DOCKER_REPO} ; \
+# 	export TF_VAR_DOCKER_LOGIN=${DOCKER_LOGIN} ; \
+# 	export TF_VAR_DOCKER_PASSWORD=${DOCKER_PASSWORD} ; \
+# 	terraform apply -auto-approve
+# 	touch authorize-dockerhub
