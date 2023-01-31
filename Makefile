@@ -1,3 +1,6 @@
+# Note: for diagnosing build performance, install "ts" from moreutils and:
+# 	make <targets> | ts -s "%.s || %H:%M:%S ||"
+
 SHELL=/bin/bash
 
 BASEURL ?= https://127.0.0.1.sslip.io
@@ -11,6 +14,9 @@ export COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.dev.yml
 
 DETACHED: ## Run docker in "detached" mode
 	$(eval DOCKER_DETACHED = --detach)
+
+AMD: ## Build for linux/amd platform
+	$(eval DOCKER_DEFAULT_PLATFORM = linux/amd64)
 
 PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 	$(eval ENV_FILE = prod.env)
@@ -55,15 +61,18 @@ hash: ## Show current short hash
 	@echo Git hash: ${GIT_HASH}
 
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
+	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 
 start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
+	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --detach --build
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
-
 
 e2e-install: e2e/node_modules ## Install Cypress E2E testing tools
 	$(E2E_RUN) npm install
