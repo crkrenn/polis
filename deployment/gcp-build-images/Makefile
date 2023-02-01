@@ -71,6 +71,8 @@ set-project:  ## set google cloud project to value in DEV/PROD env
 	echo "setting google project to ${GCP_PROJECT_ID}"
 	gcloud config set project ${GCP_PROJECT_ID}
 
+# mktemp -d
+
 build-images: ## build polis images and push to google cloud repos (~60 min)
 	make verify-project
 	make set-project
