@@ -71,9 +71,7 @@ set-project:  ## set google cloud project to value in DEV/PROD env
 	echo "setting google project to ${GCP_PROJECT_ID}"
 	gcloud config set project ${GCP_PROJECT_ID}
 
-# mktemp -d
-
-build-images: ## build polis images and push to google cloud repos (~60 min)
+create_cloudbuild_file: ## create cloudbuild.yaml file
 	make verify-project
 	make set-project
 	make update_polis_config
@@ -85,7 +83,24 @@ build-images: ## build polis images and push to google cloud repos (~60 min)
 	export DOCKER_REPO=${DOCKER_REPO}; \
 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-	../bin/build_images.py
+	../bin/create_cloudbuild_file.py
+
+clone-repo: create_cloudbuild_file ## create clean clone of repo
+	$(eval TEMP_REPO = $(shell mktemp -d))
+	@echo ${TEMP_REPO} >> temp_repos.txt
+	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
+	export TAG=${TAG}; \
+	export GCP_REGION=${GCP_REGION}; \
+	export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
+	export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
+	export DOCKER_REPO=${DOCKER_REPO}; \
+	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
+	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
+	export TEMP_REPO=${TEMP_REPO}; \
+	../bin/make_temp_repo_clone.py
+	@echo "cloned repo to ${TEMP_REPO}"
+
+build-images: clone-repo ## build docker images
 	cd ../.. ; \
 	gcloud builds submit \
 		--region=${GCP_REGION} \
