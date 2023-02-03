@@ -13,3 +13,6 @@ add timestamps to next build
 add sed commands to makefile
  2786  sed -i"" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" client-*/Dockerfile
  2789  sed -i "" -e "s/#COPY polis.config.template.js/COPY polis.config.template.js/" client-*/Dockerfile
+
+fix Makefile so that mktemp is only called once 
+consider fixing other redundant targets (do make clean first)

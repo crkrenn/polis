@@ -26,27 +26,37 @@ try:
     DOCKER_REPO = os.environ["DOCKER_REPO"]
     DOCKER_LOGIN = os.environ["DOCKER_LOGIN"]
     DOCKER_PASSWORD = os.environ["DOCKER_PASSWORD"]
-    TEMP_DIR = os.environ["TEMP_DIR"]
+    TEMP_REPO_DIR = os.environ["TEMP_REPO_DIR"]
 except KeyError as err:
     print("ERROR: missing environment variable!")
     print(err)
-    sys.exit()
+    sys.exit(1)
 
 result = subprocess.run("git rev-parse --show-toplevel", shell=True, check=True, capture_output=True)
-root_directory = result.stdout.decode("utf-8").strip()
-LOG.info(f"Root directory: {root_directory}")
+repo_root_directory = result.stdout.decode("utf-8").strip()
+LOG.info(f"Root directory: {repo_root_directory}")
 
 result = subprocess.run("git status", shell=True, check=True, capture_output=True)
+lines = result.stdout.decode("utf-8").split("\n")
+words = lines[0].split("On branch ")
+branch_name = words[1]
+LOG.info(f"branch name: {branch_name}")
+
 if "Changes not staged for commit" in result.stdout.decode("utf-8"):
     LOG.error("Changes not staged for commit: please commit or stash before running this script")
-    sys.exit()
-if "no changes added to commit" in result.stdout.decode("utf-8"):
+    sys.exit(1)
+elif "no changes added to commit" in result.stdout.decode("utf-8"):
     LOG.info("No changes to commit")
 else:
     LOG.error("Changes to commit: please commit or stash before running this script")
-    sys.exit()
-LOG.info(f"Root directory: {root_directory}")
-"no changes added to commit"
+    sys.exit(1)
+
+LOG.info("Cloning repo")
+result = subprocess.run(f"cd {TEMP_REPO_DIR}; git clone -l {repo_root_directory} .; git status",
+    shell=True, check=True, capture_output=True)
+LOG.info(result.stdout.decode("utf-8"))
+
+
 # get branch name from git status
 # verify that "nothing added to commit"
 # clone repo

@@ -1,3 +1,5 @@
+# use "cat -e -t -v Makefile" to see tabs and newlines
+
 BASE_ENV ?= .env
 PROD_ENV ?= prod.env
 DEV_ENV ?= dev.env
@@ -10,41 +12,45 @@ DOCKER_COMPOSE_FILE = ../../docker-compose.yml
 include ${BASE_ENV}
 export $(shell sed 's/=.*//' ${BASE_ENV})
 
-update_polis_config: ## Copy polis.config.js to client-* directories
+clean: FORCE
+	@-rm update-polis-config
+	@-rm docker_temp.env
+	@-rm verify-project
+	@-rm set-project
+	@-rm create-cloudbuild-file
+	@-rm make-temp-repo-dir
+	@-rm clone-repo
+	@-rm copy-config-files
+
+FORCE:
+
+update-polis-config: make-temp-repo-dir ## Copy polis.config.js to client-* directories
+	@echo "\nUpdating polis.config.js in client-* directories"
 	@echo "Copying polis.config.js (if present) to client-* directories"
 	@echo "Renaming polis.config.template.js to polis.config.template.js.bak"
-	@-cp ../../polis.config.js ../../client-participation
-	@-cp ../../polis.config.js ../../client-admin
-	@-cp ../../polis.config.js ../../client-report
-	@-mv ../../client-participation/polis.config.template.js \
-		../../client-participation/polis.config.template.js.bak
-	@-mv ../../client-admin/polis.config.template.js \
-		../../client-admin/polis.config.template.js.bak
-	@-mv ../../client-report/polis.config.template.js \
-		../../client-report/polis.config.template.js.bak
-	@-sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
-		../../client-*/Dockerfile
-
-revert_polis_config: ## Revert polis.config.js in client-* directories
-	@echo "Deleting polis.config.js (if present) in client-* directories"
-	@-rm ../../client-*/polis.config.js
-	@-mv ../../client-participation/polis.config.template.js.bak \
-		../../client-participation/polis.config.template.js
-	@-mv ../../client-admin/polis.config.template.js.bak \
-		../../client-admin/polis.config.template.js
-	@-mv ../../client-report/polis.config.template.js.bak \
-		../../client-report/polis.config.template.js
-	@-sed -i "" -e "s/#COPY polis.config.template.js/COPY polis.config.template.js/" \
-		../../client-*/Dockerfile
+	@echo "Modifying client-*/Dockerfile(s)"
+	@cd ${TEMP_REPO_DIR} && \
+	cp polis.config.js client-participation; \
+	cp polis.config.js client-admin; \
+	cp polis.config.js client-report; \
+	mv client-participation/polis.config.template.js \
+		client-participation/polis.config.template.js.bak; \
+	mv client-admin/polis.config.template.js \
+		client-admin/polis.config.template.js.bak; \
+	mv client-report/polis.config.template.js \
+		client-report/polis.config.template.js.bak; \
+	sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
+		client-*/Dockerfile
+	@touch update-polis-config
 
 PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
-	@echo Running in prod mode
+	@echo "\nRunning in prod mode"
 	$(eval ENV_FILE = prod.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
 
 DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
-	@echo Running in dev mode
+	@echo "\nRunning in dev mode"
 	$(eval ENV_FILE = dev.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
@@ -53,10 +59,13 @@ DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
 # 	@rm -f create-repos authorize-dockerhub
 
 docker_env:
+	@echo "\nCreating docker_temp.env file"
 	$(shell cat ${BASE_ENV} > ${DOCKER_ENV})
 	$(shell cat ${ENV_FILE} >> ${DOCKER_ENV})
+	@touch docker_env
 
 verify-project:
+	@echo "\nverifying project"
 	@if [ -z ${GCP_PROJECT_ID} ]; then \
 		echo "ERROR: GCP_PROJECT_ID not set"; \
 		exit 1; \
@@ -65,16 +74,18 @@ verify-project:
 		echo "ERROR: project ${GCP_PROJECT_ID} does not exist"; \
 		exit 1; \
 	fi
+	@touch verify-project
 
 set-project:  ## set google cloud project to value in DEV/PROD env
-	make verify-project
-	echo "setting google project to ${GCP_PROJECT_ID}"
-	gcloud config set project ${GCP_PROJECT_ID}
+	@make verify-project
+	@echo "\nsetting google project to ${GCP_PROJECT_ID}"
+	@gcloud config set project ${GCP_PROJECT_ID}
+	@touch set-project
 
-create_cloudbuild_file: ## create cloudbuild.yaml file
-	make verify-project
-	make set-project
-	make update_polis_config
+create-cloudbuild-file: ## create cloudbuild.yaml file
+	@echo "\ncreating cloudbuild.yaml file"
+	@make verify-project
+	@make set-project
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
 	export TAG=${TAG}; \
 	export GCP_REGION=${GCP_REGION}; \
@@ -84,10 +95,17 @@ create_cloudbuild_file: ## create cloudbuild.yaml file
 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
 	../bin/create_cloudbuild_file.py
+	@touch create-cloudbuild-file
 
-clone-repo: create_cloudbuild_file ## create clean clone of repo
-	$(eval TEMP_REPO = $(shell mktemp -d))
-	@echo ${TEMP_REPO} >> temp_repos.txt
+make-temp-repo-dir: ## create temp directory for repo clone
+	@echo "\ncreating temp directory for repo clone"
+	$(eval TEMP_REPO_DIR = $(shell mktemp -d))
+	@echo ${TEMP_REPO_DIR} >> temp_repo_dirs.txt
+	@ln -sf ${TEMP_REPO_DIR} .
+	@touch make-temp-repo-dir
+
+clone-repo: make-temp-repo-dir create-cloudbuild-file ## create clean clone of repo
+	@echo "\ncloning repo to ${TEMP_REPO_DIR}"
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
 	export TAG=${TAG}; \
 	export GCP_REGION=${GCP_REGION}; \
@@ -96,17 +114,38 @@ clone-repo: create_cloudbuild_file ## create clean clone of repo
 	export DOCKER_REPO=${DOCKER_REPO}; \
 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-	export TEMP_REPO=${TEMP_REPO}; \
+	export TEMP_REPO_DIR=${TEMP_REPO_DIR}; \
 	../bin/make_temp_repo_clone.py
-	@echo "cloned repo to ${TEMP_REPO}"
+	@echo "cloned repo to ${TEMP_REPO_DIR}"
+	@touch clone-repo
+
+copy-config-files:
+	@echo "\ncopying config files to ${TEMP_REPO_DIR}"
+	cd ../.. && \
+	cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
+	cp *.env ${TEMP_REPO_DIR}/polis.config.template.js
+	@touch copy-config-files
 
 build-images: clone-repo ## build docker images
-	cd ../.. ; \
-	gcloud builds submit \
-		--region=${GCP_REGION} \
-		--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
-	ts -s "%.s || %H:%M:%S ||"
-	make revert_polis_config
+	@echo "\nbuilding docker images"
+	make copy-config-files
+	make update-polis-config
+	@echo "building docker images"
+	cd ${TEMP_REPO_DIR} ; \
+
+# noop:
+# 	gcloud builds submit \
+# 		--region=${GCP_REGION} \
+# 		--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
+# 	ts -s "%.s || %H:%M:%S ||"
+# 	@echo "done building docker images"
+# 	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
+# 	cd ${TEMP_REPO_DIR} && \
+# 	/bin/rm -rf * && \
+# 	cd .. && \
+# 	/bin/rm -rf ${TEMP_REPO_DIR}
+# 	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
+# 	/bin/rm ${TEMP_REPO_DIR}
 
 
 echo_vars: docker_env
@@ -178,7 +217,7 @@ help:
 # 	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
 # 	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
 # 	../bin/create_repos.py
-# 	touch create-repos
+# 	@touch create-repos
 
 # authorize-dockerhub: ## connect google cloud to dockerhub
 # 	make verify-project
@@ -198,4 +237,4 @@ help:
 # 	export TF_VAR_DOCKER_LOGIN=${DOCKER_LOGIN} ; \
 # 	export TF_VAR_DOCKER_PASSWORD=${DOCKER_PASSWORD} ; \
 # 	terraform apply -auto-approve
-# 	touch authorize-dockerhub
+# 	@touch authorize-dockerhub
