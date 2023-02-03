@@ -110,11 +110,11 @@ update-polis-config: clean copy-config-files # Copy polis.config.js to client-* 
 			client-admin/polis.config.template.js.bak; \
 		mv client-report/polis.config.template.js \
 			client-report/polis.config.template.js.bak; \
-		sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
+		sed -i "" -e "s|COPY polis.config.template.js|#COPY polis.config.template.js|" \
 			client-*/Dockerfile; \
-		sed -i "" -e "s/COPY client-admin/polis.config.template.js/#COPY client-admin/polis.config.template.js/" \
+		sed -i "" -e "s|COPY client-admin/polis.config.template.js|#COPY client-admin/polis.config.template.js|" \
 			file-*/Dockerfile Dockerfile; \
-		sed -i "" -e "s/COPY client-participation/polis.config.template.js/#COPY client-participation/polis.config.template.js/" \
+		sed -i "" -e "s|COPY client-participation/polis.config.template.js|#COPY client-participation/polis.config.template.js|" \
 			file-*/Dockerfile Dockerfile; \
 	@touch update-polis-config
 
