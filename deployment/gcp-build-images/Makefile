@@ -25,6 +25,7 @@ clean:
 	@-rm make-temp-repo-dir
 	@-rm clone-repo
 	@-rm copy-config-files
+	@-make clean-temp-repo-dirs
 	@-touch clean
 
 update-polis-config: clean make-temp-repo-dir # Copy polis.config.js to client-* directories
@@ -123,7 +124,7 @@ clone-repo: clean make-temp-repo-dir  ## create clean clone of repo
 	@echo "cloned repo to ${TEMP_REPO_DIR}"
 	@touch clone-repo
 
-copy-config-files: clean ## copy config files to temp repo dir
+copy-config-files: clean clone-repo ## copy config files to temp repo dir
 	@echo "\ncopying config files to ${TEMP_REPO_DIR}"
 	cd ../.. && \
 		cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
