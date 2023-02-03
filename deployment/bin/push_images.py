@@ -6,7 +6,8 @@ import yaml
 import subprocess
 import pprint
 
-from common import call_cmd, LOGFORMAT
+from common import call_cmd
+import delta_log_formatter
 
 import logging
 import datetime
