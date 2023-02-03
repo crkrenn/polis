@@ -111,7 +111,11 @@ update-polis-config: clean copy-config-files # Copy polis.config.js to client-* 
 		mv client-report/polis.config.template.js \
 			client-report/polis.config.template.js.bak; \
 		sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
-			client-*/Dockerfile
+			client-*/Dockerfile; \
+		sed -i "" -e "s/COPY client-admin/polis.config.template.js/#COPY client-admin/polis.config.template.js/" \
+			file-*/Dockerfile Dockerfile; \
+		sed -i "" -e "s/COPY client-participation/polis.config.template.js/#COPY client-participation/polis.config.template.js/" \
+			file-*/Dockerfile Dockerfile; \
 	@touch update-polis-config
 
 create-cloudbuild-file: clean update-polis-config # create cloudbuild.yaml file
@@ -136,7 +140,7 @@ create-cloudbuild-file: clean update-polis-config # create cloudbuild.yaml file
 build-images: clean create-cloudbuild-file ## build docker images
 	@echo "\nbuilding docker images"
 	@echo "building docker images"
-	@-cd ${TEMP_REPO_DIR}; \
+	@cd ${TEMP_REPO_DIR}; \
 		gcloud builds submit \
 				--region=${GCP_REGION} \
 				--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
