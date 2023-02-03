@@ -60,21 +60,22 @@ rm-ALL-ALL-TAGS: ## Remove EVERY Docker container, volume, and image on this mac
 hash: ## Show current short hash
 	@echo Git hash: ${GIT_HASH}
 
-start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
-<<<<<<< HEAD
-	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+# @TTD: fix this; it doesn't work if DOCKER_DEFAULT_PLATFORM is not set
+# start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
+# 	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
+# 		docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 
-start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
-	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
-	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --detach --build
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
-	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
-	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
-=======
+# start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
+# 	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
+# 		docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+# 	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
+# 		docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --detach --build
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+# 	@export DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}; \
+# 		docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+
+start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 
 start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
@@ -83,7 +84,6 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --detach --build
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
->>>>>>> 20e14140dc78198cb12a00964ed7f9223adfc5a5
 
 e2e-install: e2e/node_modules ## Install Cypress E2E testing tools
 	$(E2E_RUN) npm install

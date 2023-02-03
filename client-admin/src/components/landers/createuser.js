@@ -147,7 +147,7 @@ class Createuser extends React.Component {
             sx={{ my: [2] }}
             id="createUserButton"
             onClick={this.handleLoginClicked.bind(this)}>
-            {this.props.pending ? 'Creating Account...' : 'Create Account'}
+            {this.props.pending ? 'Creating Account...' : `Create Account ${window.domainWhitelist}`}
           </Button>
         </form>
         <Box sx={{ mb: [4] }}>

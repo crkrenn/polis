@@ -80,7 +80,7 @@ start-local: docker_env echo_vars ## Start all Docker containers on local machin
 
 stop-local: docker_env echo_vars ## Start all Docker containers on local machine
 	docker context use ${LOCAL_DOCKER_CONTEXT}; \
-	docker-compose --env-file ${DOCKER_ENV} down ${DOCKER_DETACHED}
+	docker-compose --env-file ${DOCKER_ENV} down
 
 stop-ALL:  ## Stop all running containers
 	@-docker container stop $(shell docker container ls -q)

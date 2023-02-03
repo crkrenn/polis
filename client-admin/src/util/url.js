@@ -9,6 +9,7 @@ const wl = window.domainWhitelist.map(function (x) {
 })
 
 for (let i = 0; i < wl.length; i++) {
+  urlPrefix = urlPrefix + window.domainWhitelist[i] + "_"
   if (document.domain.match(wl[i])) {
     urlPrefix = document.location.protocol + '//' + document.location.hostname
     if (document.location.port) {
