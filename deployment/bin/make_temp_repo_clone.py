@@ -42,10 +42,13 @@ words = lines[0].split("On branch ")
 branch_name = words[1]
 LOG.info(f"branch name: {branch_name}")
 
+LOG.info(f"Git status: {lines[-2:]}")
 if "Changes not staged for commit" in result.stdout.decode("utf-8"):
     LOG.error("Changes not staged for commit: please commit or stash before running this script")
     sys.exit(1)
 elif "no changes added to commit" in result.stdout.decode("utf-8"):
+    LOG.info("No changes to commit")
+elif "nothing added to commit" in result.stdout.decode("utf-8"):
     LOG.info("No changes to commit")
 else:
     LOG.error("Changes to commit: please commit or stash before running this script")
