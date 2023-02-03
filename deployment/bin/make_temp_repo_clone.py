@@ -36,6 +36,22 @@ result = subprocess.run("git rev-parse --show-toplevel", shell=True, check=True,
 root_directory = result.stdout.decode("utf-8").strip()
 LOG.info(f"Root directory: {root_directory}")
 
+result = subprocess.run("git status", shell=True, check=True, capture_output=True)
+if "Changes not staged for commit" in result.stdout.decode("utf-8"):
+    LOG.error("Changes not staged for commit: please commit or stash before running this script")
+    sys.exit()
+if "no changes added to commit" in result.stdout.decode("utf-8"):
+    LOG.info("No changes to commit")
+else:
+    LOG.error("Changes to commit: please commit or stash before running this script")
+    sys.exit()
+LOG.info(f"Root directory: {root_directory}")
+"no changes added to commit"
+# get branch name from git status
+# verify that "nothing added to commit"
+# clone repo
+# copy links in root directory (dev.env, polis.config.json)
+# verify that cloudignore is correct
 
 
 # LOG.info(f"Pushing {new_image}")
