@@ -18,7 +18,7 @@ ifneq ($(MAKING_CLEAN),1)
 	export MAKING_CLEAN=1
 endif
 
-clean:
+clean: 
 	@echo "\nCleaning up"
 	@-rm update-polis-config
 	@-rm docker_temp.env
@@ -29,7 +29,6 @@ clean:
 	@-rm clone-repo
 	@-rm copy-config-files
 	@-touch clean
-	@-make rm-temp-repo-dirs
 
 update-polis-config: clean make-temp-repo-dir # Copy polis.config.js to client-* directories
 	@echo "\nUpdating polis.config.js in client-* directories"
@@ -151,7 +150,7 @@ build-images: clean clone-repo ## build docker images
 	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
 	/bin/rm `basename ${TEMP_REPO_DIR}`
 
-rm-temp-repo-dirs: clean make-temp-repo-dir ## remove temp directories and links
+rm-temp-repo-dirs: make-temp-repo-dir ## remove temp directories and links
 	@make clean
 	@echo "\nremoving temp directories for repo clone"
 	@-base1=`dirname ${TEMP_REPO_DIR}`; \
