@@ -13,7 +13,10 @@ DOCKER_COMPOSE_FILE = ../../docker-compose.yml
 include ${BASE_ENV}
 export $(shell sed 's/=.*//' ${BASE_ENV})
 
-CMD:=$(shell /bin/rm clean)
+ifneq ($(MAKING_CLEAN),1)
+	CMD:=$(shell /bin/rm clean)
+	export MAKING_CLEAN=1
+endif
 
 clean:
 	@echo "\nCleaning up"
@@ -25,8 +28,8 @@ clean:
 	@-rm make-temp-repo-dir
 	@-rm clone-repo
 	@-rm copy-config-files
-	@-make clean-temp-repo-dirs
 	@-touch clean
+	@-make rm-temp-repo-dirs
 
 update-polis-config: clean make-temp-repo-dir # Copy polis.config.js to client-* directories
 	@echo "\nUpdating polis.config.js in client-* directories"
