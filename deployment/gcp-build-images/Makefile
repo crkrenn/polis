@@ -132,20 +132,18 @@ build-images: clone-repo ## build docker images
 	make update-polis-config
 	@echo "building docker images"
 	cd ${TEMP_REPO_DIR} ; \
-
-# noop:
-# 	gcloud builds submit \
-# 		--region=${GCP_REGION} \
-# 		--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
-# 	ts -s "%.s || %H:%M:%S ||"
-# 	@echo "done building docker images"
-# 	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
-# 	cd ${TEMP_REPO_DIR} && \
-# 	/bin/rm -rf * && \
-# 	cd .. && \
-# 	/bin/rm -rf ${TEMP_REPO_DIR}
-# 	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
-# 	/bin/rm ${TEMP_REPO_DIR}
+	echo gcloud builds submit \
+		--region=${GCP_REGION} \
+		--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
+	ts -s "%.s || %H:%M:%S ||"
+	@echo "done building docker images"
+	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
+	cd ${TEMP_REPO_DIR} && \
+	/bin/rm -rf * && \
+	cd .. && \
+	/bin/rm -rf ${TEMP_REPO_DIR}
+	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
+	/bin/rm ${TEMP_REPO_DIR}
 
 
 echo_vars: docker_env
