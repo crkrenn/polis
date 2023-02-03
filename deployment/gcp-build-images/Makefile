@@ -130,7 +130,7 @@ copy-config-files: clean clone-repo ## copy config files to temp repo dir
 	@echo "\ncopying config files to ${TEMP_REPO_DIR}"
 	@cd ../.. && \
 		cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
-		cp *.env ${TEMP_REPO_DIR}/polis.config.template.js
+		cp *.env ${TEMP_REPO_DIR}
 	@touch copy-config-files
 
 build-images: clean clone-repo copy-config-files update-polis-config ## build docker images
