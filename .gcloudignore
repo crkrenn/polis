@@ -78,7 +78,6 @@ old
 polisStatic/
 pom.xml
 pom.xml.asc
-public
 scratch
 src/polismath/play.clj
 terraform*tfstate*
