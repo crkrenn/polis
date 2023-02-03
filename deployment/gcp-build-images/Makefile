@@ -30,25 +30,6 @@ clean:
 	@-rm copy-config-files
 	@-touch clean
 
-update-polis-config: clean make-temp-repo-dir # Copy polis.config.js to client-* directories
-	@echo "\nUpdating polis.config.js in client-* directories"
-	@echo "Copying polis.config.js (if present) to client-* directories"
-	@echo "Renaming polis.config.template.js to polis.config.template.js.bak"
-	@echo "Modifying client-*/Dockerfile(s)"
-	@cd ${TEMP_REPO_DIR} && \
-		cp polis.config.js client-participation; \
-		cp polis.config.js client-admin; \
-		cp polis.config.js client-report; \
-		mv client-participation/polis.config.template.js \
-			client-participation/polis.config.template.js.bak; \
-		mv client-admin/polis.config.template.js \
-			client-admin/polis.config.template.js.bak; \
-		mv client-report/polis.config.template.js \
-			client-report/polis.config.template.js.bak; \
-		sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
-			client-*/Dockerfile
-	@touch update-polis-config
-
 PROD: clean ## Run in prod mode (e.g. `make PROD start`, etc.)
 	@echo "\nRunning in prod mode"
 	$(eval ENV_FILE = prod.env)
@@ -85,25 +66,6 @@ set-project: clean  # set google cloud project to value in DEV/PROD env
 	@gcloud config set project ${GCP_PROJECT_ID}
 	@touch set-project
 
-create-cloudbuild-file: clean # create cloudbuild.yaml file
-	@echo "\ncreating cloudbuild.yaml file"
-	@make verify-project
-	@make set-project
-	@cd ${TEMP_REPO_DIR} && \
-		cd ${GCP_BUILD_IMAGE_DIRECTORY} && \
-		export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
-		export TAG=${TAG}; \
-		export GCP_REGION=${GCP_REGION}; \
-		export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
-		export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
-		export DOCKER_REPO=${DOCKER_REPO}; \
-		export DOCKER_LOGIN=${DOCKER_LOGIN}; \
-		export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-		../bin/create_cloudbuild_file.py; \
-		cd ../..; \
-		ln -sf ${GCP_BUILD_IMAGE_DIRECTORY}/cloudbuild.yaml .
-	@touch create-cloudbuild-file
-
 make-temp-repo-dir: clean # create temp directory for repo clone
 	@echo "\ncreating temp directory for repo clone"
 	$(eval TEMP_REPO_DIR = $(shell mktemp -d))
@@ -133,7 +95,45 @@ copy-config-files: clean clone-repo ## copy config files to temp repo dir
 		cp *.env ${TEMP_REPO_DIR}
 	@touch copy-config-files
 
-build-images: clean clone-repo copy-config-files update-polis-config ## build docker images
+update-polis-config: clean copy-config-files # Copy polis.config.js to client-* directories
+	@echo "\nUpdating polis.config.js in client-* directories"
+	@echo "Copying polis.config.js (if present) to client-* directories"
+	@echo "Renaming polis.config.template.js to polis.config.template.js.bak"
+	@echo "Modifying client-*/Dockerfile(s)"
+	@cd ${TEMP_REPO_DIR} && \
+		cp polis.config.js client-participation; \
+		cp polis.config.js client-admin; \
+		cp polis.config.js client-report; \
+		mv client-participation/polis.config.template.js \
+			client-participation/polis.config.template.js.bak; \
+		mv client-admin/polis.config.template.js \
+			client-admin/polis.config.template.js.bak; \
+		mv client-report/polis.config.template.js \
+			client-report/polis.config.template.js.bak; \
+		sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
+			client-*/Dockerfile
+	@touch update-polis-config
+
+create-cloudbuild-file: clean update-polis-config # create cloudbuild.yaml file
+	@echo "\ncreating cloudbuild.yaml file"
+	@make verify-project
+	@make set-project
+	@cd ${TEMP_REPO_DIR} && \
+		cd ${GCP_BUILD_IMAGE_DIRECTORY} && \
+		export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
+		export TAG=${TAG}; \
+		export GCP_REGION=${GCP_REGION}; \
+		export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
+		export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
+		export DOCKER_REPO=${DOCKER_REPO}; \
+		export DOCKER_LOGIN=${DOCKER_LOGIN}; \
+		export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
+		../bin/create_cloudbuild_file.py; \
+		cd ../..; \
+		ln -sf ${GCP_BUILD_IMAGE_DIRECTORY}/cloudbuild.yaml .
+	@touch create-cloudbuild-file
+
+build-images: clean create-cloudbuild-file ## build docker images
 	@echo "\nbuilding docker images"
 	@echo "building docker images"
 	@-cd ${TEMP_REPO_DIR}; \
