@@ -138,13 +138,17 @@ build-images: clone-repo ## build docker images
 	ts -s "%.s || %H:%M:%S ||"
 	@echo "done building docker images"
 	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
-	cd ${TEMP_REPO_DIR} && \
-	/bin/rm -rf * && \
-	cd .. && \
 	/bin/rm -rf ${TEMP_REPO_DIR}
 	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
-	/bin/rm ${TEMP_REPO_DIR}
+	/bin/rm `basename ${TEMP_REPO_DIR}`
 
+rm-temp-repo-dirs: make-temp-repo-dir ## remove temp directories and links
+	@echo "\nremoving temp directorie for repo clone"
+	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
+	/bin/rm -rf ${TEMP_REPO_DIR}
+	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
+	/bin/rm `basename ${TEMP_REPO_DIR}`
+	@touch rm-temp-repo-dir
 
 echo_vars: docker_env
 	@echo TAG=${TAG}
