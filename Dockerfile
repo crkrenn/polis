@@ -66,8 +66,8 @@ RUN npm run deploy:prod
 # # If polis.config.js exists on host, will override template here.
 # COPY client-report/. .
 
-ARG GIT_HASH
-RUN npm run deploy:prod
+# ARG GIT_HASH
+# RUN npm run deploy:prod
 
 
 
