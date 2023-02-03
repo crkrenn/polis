@@ -137,8 +137,7 @@ build-images: clean create-cloudbuild-file ## build docker images
 	@echo "\nbuilding docker images"
 	@echo "building docker images"
 	@-cd ${TEMP_REPO_DIR}; \
-		cat cloudbuild.yaml; \
-		echo gcloud builds submit \
+		gcloud builds submit \
 				--region=${GCP_REGION} \
 				--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
 			ts -s "%.s || %H:%M:%S ||"
