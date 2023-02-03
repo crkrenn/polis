@@ -13,6 +13,8 @@ DOCKER_COMPOSE_FILE = ../../docker-compose.yml
 include ${BASE_ENV}
 export $(shell sed 's/=.*//' ${BASE_ENV})
 
+CMD:=$(shell /bin/rm clean)
+
 clean:
 	@echo "\nCleaning up"
 	@-rm update-polis-config
@@ -23,12 +25,9 @@ clean:
 	@-rm make-temp-repo-dir
 	@-rm clone-repo
 	@-rm copy-config-files
+	@-touch clean
 
-ifneq (${MAKING_CLEAN}, 1)
-	$(shell export MAKING_CLEAN=1; make clean)
-endif
-
-update-polis-config: make-temp-repo-dir # Copy polis.config.js to client-* directories
+update-polis-config: clean make-temp-repo-dir # Copy polis.config.js to client-* directories
 	@echo "\nUpdating polis.config.js in client-* directories"
 	@echo "Copying polis.config.js (if present) to client-* directories"
 	@echo "Renaming polis.config.template.js to polis.config.template.js.bak"
@@ -47,13 +46,13 @@ update-polis-config: make-temp-repo-dir # Copy polis.config.js to client-* direc
 			client-*/Dockerfile
 	@touch update-polis-config
 
-PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
+PROD: clean ## Run in prod mode (e.g. `make PROD start`, etc.)
 	@echo "\nRunning in prod mode"
 	$(eval ENV_FILE = prod.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
 
-DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
+DEV: clean ## Run in dev mode (e.g. `make DEV start`, etc.)
 	@echo "\nRunning in dev mode"
 	$(eval ENV_FILE = dev.env)
 	$(eval include ${ENV_FILE})
@@ -77,13 +76,13 @@ verify-project:
 	fi
 	@touch verify-project
 
-set-project:  # set google cloud project to value in DEV/PROD env
+set-project: clean  # set google cloud project to value in DEV/PROD env
 	@make verify-project
 	@echo "\nsetting google project to ${GCP_PROJECT_ID}"
 	@gcloud config set project ${GCP_PROJECT_ID}
 	@touch set-project
 
-create-cloudbuild-file: # create cloudbuild.yaml file
+create-cloudbuild-file: clean # create cloudbuild.yaml file
 	@echo "\ncreating cloudbuild.yaml file"
 	@make verify-project
 	@make set-project
@@ -102,14 +101,14 @@ create-cloudbuild-file: # create cloudbuild.yaml file
 		ln -sf ${GCP_BUILD_IMAGE_DIRECTORY}/cloudbuild.yaml .
 	@touch create-cloudbuild-file
 
-make-temp-repo-dir: # create temp directory for repo clone
+make-temp-repo-dir: clean # create temp directory for repo clone
 	@echo "\ncreating temp directory for repo clone"
 	$(eval TEMP_REPO_DIR = $(shell mktemp -d))
 	@echo ${TEMP_REPO_DIR} >> temp_repo_dirs.txt
 	@ln -sf ${TEMP_REPO_DIR} .
 	@touch make-temp-repo-dir
 
-clone-repo: make-temp-repo-dir  ## create clean clone of repo
+clone-repo: clean make-temp-repo-dir  ## create clean clone of repo
 	@echo "\ncloning repo to ${TEMP_REPO_DIR}"
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
 		export TAG=${TAG}; \
@@ -124,14 +123,14 @@ clone-repo: make-temp-repo-dir  ## create clean clone of repo
 	@echo "cloned repo to ${TEMP_REPO_DIR}"
 	@touch clone-repo
 
-copy-config-files: ## copy config files to temp repo dir
+copy-config-files: clean ## copy config files to temp repo dir
 	@echo "\ncopying config files to ${TEMP_REPO_DIR}"
 	cd ../.. && \
 		cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
 		cp *.env ${TEMP_REPO_DIR}/polis.config.template.js
 	@touch copy-config-files
 
-build-images: clone-repo ## build docker images
+build-images: clean clone-repo ## build docker images
 	@echo "\nbuilding docker images"
 	make copy-config-files
 	make update-polis-config
@@ -148,7 +147,7 @@ build-images: clone-repo ## build docker images
 	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
 	/bin/rm `basename ${TEMP_REPO_DIR}`
 
-rm-temp-repo-dirs: make-temp-repo-dir ## remove temp directories and links
+rm-temp-repo-dirs: clean make-temp-repo-dir ## remove temp directories and links
 	@make clean
 	@echo "\nremoving temp directories for repo clone"
 	@-base1=`dirname ${TEMP_REPO_DIR}`; \
@@ -156,11 +155,11 @@ rm-temp-repo-dirs: make-temp-repo-dir ## remove temp directories and links
 	@echo "removing temp links for repo clone"
 	@-/bin/rm tmp.*
 
-echo_vars: docker_env
+echo_vars: clean docker_env
 	@echo TAG=${TAG}
 
 help:
-	@echo 'Usage: make <command>'
+	@echo 'Usage:  make <command>'
 	@echo
 	@echo 'where <command> is one of the following:'
 	@echo
