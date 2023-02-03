@@ -4,6 +4,7 @@ BASE_ENV ?= .env
 PROD_ENV ?= prod.env
 DEV_ENV ?= dev.env
 DOCKER_ENV ?= docker_temp.env
+GCP_BUILD_IMAGE_DIRECTORY ?= deployment/gcp-build-images
 
 export ENV_FILE = /dev/null
 
@@ -24,23 +25,23 @@ clean: FORCE
 
 FORCE:
 
-update-polis-config: make-temp-repo-dir ## Copy polis.config.js to client-* directories
+update-polis-config: make-temp-repo-dir # Copy polis.config.js to client-* directories
 	@echo "\nUpdating polis.config.js in client-* directories"
 	@echo "Copying polis.config.js (if present) to client-* directories"
 	@echo "Renaming polis.config.template.js to polis.config.template.js.bak"
 	@echo "Modifying client-*/Dockerfile(s)"
 	@cd ${TEMP_REPO_DIR} && \
-	cp polis.config.js client-participation; \
-	cp polis.config.js client-admin; \
-	cp polis.config.js client-report; \
-	mv client-participation/polis.config.template.js \
-		client-participation/polis.config.template.js.bak; \
-	mv client-admin/polis.config.template.js \
-		client-admin/polis.config.template.js.bak; \
-	mv client-report/polis.config.template.js \
-		client-report/polis.config.template.js.bak; \
-	sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
-		client-*/Dockerfile
+		cp polis.config.js client-participation; \
+		cp polis.config.js client-admin; \
+		cp polis.config.js client-report; \
+		mv client-participation/polis.config.template.js \
+			client-participation/polis.config.template.js.bak; \
+		mv client-admin/polis.config.template.js \
+			client-admin/polis.config.template.js.bak; \
+		mv client-report/polis.config.template.js \
+			client-report/polis.config.template.js.bak; \
+		sed -i "" -e "s/COPY polis.config.template.js/#COPY polis.config.template.js/" \
+			client-*/Dockerfile
 	@touch update-polis-config
 
 PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
@@ -54,9 +55,6 @@ DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
 	$(eval ENV_FILE = dev.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
-
-# clean: ## reset create-repos and authorize-dockerhub, so they will be rerun
-# 	@rm -f create-repos authorize-dockerhub
 
 docker_env:
 	@echo "\nCreating docker_temp.env file"
@@ -76,54 +74,58 @@ verify-project:
 	fi
 	@touch verify-project
 
-set-project:  ## set google cloud project to value in DEV/PROD env
+set-project:  # set google cloud project to value in DEV/PROD env
 	@make verify-project
 	@echo "\nsetting google project to ${GCP_PROJECT_ID}"
 	@gcloud config set project ${GCP_PROJECT_ID}
 	@touch set-project
 
-create-cloudbuild-file: ## create cloudbuild.yaml file
+create-cloudbuild-file: # create cloudbuild.yaml file
 	@echo "\ncreating cloudbuild.yaml file"
 	@make verify-project
 	@make set-project
-	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
-	export TAG=${TAG}; \
-	export GCP_REGION=${GCP_REGION}; \
-	export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
-	export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
-	export DOCKER_REPO=${DOCKER_REPO}; \
-	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
-	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-	../bin/create_cloudbuild_file.py
+	@cd ${TEMP_REPO_DIR} && \
+		cd ${GCP_BUILD_IMAGE_DIRECTORY} && \
+		export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
+		export TAG=${TAG}; \
+		export GCP_REGION=${GCP_REGION}; \
+		export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
+		export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
+		export DOCKER_REPO=${DOCKER_REPO}; \
+		export DOCKER_LOGIN=${DOCKER_LOGIN}; \
+		export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
+		../bin/create_cloudbuild_file.py; \
+		cd ../..; \
+		ln -sf ${GCP_BUILD_IMAGE_DIRECTORY}/cloudbuild.yaml .
 	@touch create-cloudbuild-file
 
-make-temp-repo-dir: ## create temp directory for repo clone
+make-temp-repo-dir: # create temp directory for repo clone
 	@echo "\ncreating temp directory for repo clone"
 	$(eval TEMP_REPO_DIR = $(shell mktemp -d))
 	@echo ${TEMP_REPO_DIR} >> temp_repo_dirs.txt
 	@ln -sf ${TEMP_REPO_DIR} .
 	@touch make-temp-repo-dir
 
-clone-repo: make-temp-repo-dir create-cloudbuild-file ## create clean clone of repo
+clone-repo: make-temp-repo-dir  ## create clean clone of repo
 	@echo "\ncloning repo to ${TEMP_REPO_DIR}"
 	@export DOCKER_COMPOSE_FILE=${DOCKER_COMPOSE_FILE}; \
-	export TAG=${TAG}; \
-	export GCP_REGION=${GCP_REGION}; \
-	export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
-	export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
-	export DOCKER_REPO=${DOCKER_REPO}; \
-	export DOCKER_LOGIN=${DOCKER_LOGIN}; \
-	export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
-	export TEMP_REPO_DIR=${TEMP_REPO_DIR}; \
-	../bin/make_temp_repo_clone.py
+		export TAG=${TAG}; \
+		export GCP_REGION=${GCP_REGION}; \
+		export GCP_PROJECT_ID=${GCP_PROJECT_ID}; \
+		export GCP_PROJECT_NUMBER=${GCP_PROJECT_NUMBER}; \
+		export DOCKER_REPO=${DOCKER_REPO}; \
+		export DOCKER_LOGIN=${DOCKER_LOGIN}; \
+		export DOCKER_PASSWORD=${DOCKER_PASSWORD}; \
+		export TEMP_REPO_DIR=${TEMP_REPO_DIR}; \
+		../bin/make_temp_repo_clone.py
 	@echo "cloned repo to ${TEMP_REPO_DIR}"
 	@touch clone-repo
 
-copy-config-files:
+copy-config-files: ## copy config files to temp repo dir
 	@echo "\ncopying config files to ${TEMP_REPO_DIR}"
 	cd ../.. && \
-	cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
-	cp *.env ${TEMP_REPO_DIR}/polis.config.template.js
+		cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
+		cp *.env ${TEMP_REPO_DIR}/polis.config.template.js
 	@touch copy-config-files
 
 build-images: clone-repo ## build docker images
@@ -131,11 +133,12 @@ build-images: clone-repo ## build docker images
 	make copy-config-files
 	make update-polis-config
 	@echo "building docker images"
-	cd ${TEMP_REPO_DIR} ; \
-	echo gcloud builds submit \
-		--region=${GCP_REGION} \
-		--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
-	ts -s "%.s || %H:%M:%S ||"
+	-cd ${TEMP_REPO_DIR}; \
+		cat cloudbuild.yaml; \
+		echo gcloud builds submit \
+				--region=${GCP_REGION} \
+				--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
+			ts -s "%.s || %H:%M:%S ||"
 	@echo "done building docker images"
 	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
 	/bin/rm -rf ${TEMP_REPO_DIR}
@@ -143,12 +146,12 @@ build-images: clone-repo ## build docker images
 	/bin/rm `basename ${TEMP_REPO_DIR}`
 
 rm-temp-repo-dirs: make-temp-repo-dir ## remove temp directories and links
-	@echo "\nremoving temp directorie for repo clone"
-	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
-	/bin/rm -rf ${TEMP_REPO_DIR}
-	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
-	/bin/rm `basename ${TEMP_REPO_DIR}`
-	@touch rm-temp-repo-dir
+	@make clean
+	@echo "\nremoving temp directories for repo clone"
+	@-base1=`dirname ${TEMP_REPO_DIR}`; \
+		/bin/rm -rf $${base1}/tmp.*
+	@echo "removing temp links for repo clone"
+	@-/bin/rm tmp.*
 
 echo_vars: docker_env
 	@echo TAG=${TAG}
