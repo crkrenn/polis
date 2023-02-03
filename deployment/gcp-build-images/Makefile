@@ -18,7 +18,7 @@ ifneq ($(MAKING_CLEAN),1)
 	export MAKING_CLEAN=1
 endif
 
-clean: 
+clean:
 	@echo "\nCleaning up"
 	@-rm update-polis-config
 	@-rm docker_temp.env
@@ -128,17 +128,15 @@ clone-repo: clean make-temp-repo-dir  ## create clean clone of repo
 
 copy-config-files: clean clone-repo ## copy config files to temp repo dir
 	@echo "\ncopying config files to ${TEMP_REPO_DIR}"
-	cd ../.. && \
+	@cd ../.. && \
 		cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
 		cp *.env ${TEMP_REPO_DIR}/polis.config.template.js
 	@touch copy-config-files
 
-build-images: clean clone-repo ## build docker images
+build-images: clean clone-repo copy-config-files update-polis-config ## build docker images
 	@echo "\nbuilding docker images"
-	make copy-config-files
-	make update-polis-config
 	@echo "building docker images"
-	-cd ${TEMP_REPO_DIR}; \
+	@-cd ${TEMP_REPO_DIR}; \
 		cat cloudbuild.yaml; \
 		echo gcloud builds submit \
 				--region=${GCP_REGION} \
@@ -146,9 +144,9 @@ build-images: clean clone-repo ## build docker images
 			ts -s "%.s || %H:%M:%S ||"
 	@echo "done building docker images"
 	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
-	/bin/rm -rf ${TEMP_REPO_DIR}
+	@/bin/rm -rf ${TEMP_REPO_DIR}
 	@echo "deleting temp repo link at ${TEMP_REPO_DIR}"
-	/bin/rm `basename ${TEMP_REPO_DIR}`
+	@/bin/rm `basename ${TEMP_REPO_DIR}`
 
 rm-temp-repo-dirs: make-temp-repo-dir ## remove temp directories and links
 	@make clean
