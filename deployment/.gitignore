@@ -1,3 +1,4 @@
-push-images
+*tfstate*
 cloud-compose.yaml
 cloud-compose-edit.yaml
+.terraform*
