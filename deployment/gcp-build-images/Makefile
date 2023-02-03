@@ -140,7 +140,7 @@ build-images: clean create-cloudbuild-file ## build docker images
 		gcloud builds submit \
 				--region=${GCP_REGION} \
 				--config=deployment/gcp-build-images/cloudbuild.yaml 2>&1 | \
-			ts -s "%.s || %H:%M:%S ||"
+			ts " %H:%M:%S ||" | ts -s "%.s ||"
 	@echo "done building docker images"
 	@echo "deleting temp repo clone at ${TEMP_REPO_DIR}"
 	@/bin/rm -rf ${TEMP_REPO_DIR}
