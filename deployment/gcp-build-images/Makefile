@@ -88,7 +88,7 @@ clone-repo: clean make-temp-repo-dir  ## create clean clone of repo
 	@echo "cloned repo to ${TEMP_REPO_DIR}"
 	@touch clone-repo
 
-copy-config-files: clean clone-repo ## copy config files to temp repo dir
+copy-config-files: clean clone-repo # copy config files to temp repo dir
 	@echo "\ncopying config files to ${TEMP_REPO_DIR}"
 	@cd ../.. && \
 		cp polis.config.js ${TEMP_REPO_DIR}/polis.config.js && \
@@ -118,7 +118,7 @@ update-polis-config: clean copy-config-files # Copy polis.config.js to client-* 
 			file-*/Dockerfile Dockerfile;
 	@touch update-polis-config
 
-create-cloudbuild-file: clean update-polis-config # create cloudbuild.yaml file
+create-cloudbuild-file: clean update-polis-config ## create cloudbuild.yaml file
 	@echo "\ncreating cloudbuild.yaml file"
 	@make verify-project
 	@make set-project
