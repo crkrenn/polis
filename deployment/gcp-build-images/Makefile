@@ -115,7 +115,7 @@ update-polis-config: clean copy-config-files # Copy polis.config.js to client-* 
 		sed -i "" -e "s|COPY client-admin/polis.config.template.js|#COPY client-admin/polis.config.template.js|" \
 			file-*/Dockerfile Dockerfile; \
 		sed -i "" -e "s|COPY client-participation/polis.config.template.js|#COPY client-participation/polis.config.template.js|" \
-			file-*/Dockerfile Dockerfile; \
+			file-*/Dockerfile Dockerfile;
 	@touch update-polis-config
 
 create-cloudbuild-file: clean update-polis-config # create cloudbuild.yaml file
