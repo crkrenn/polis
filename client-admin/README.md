@@ -1,44 +1,78 @@
 # Polis Admin Console
 
-The below instructions are no longer officially supported; if you'd like to use them as a reference, we suggest you check out the official [Dockerfile](Dockerfile) to understand the latest build process and specific package versions.
+The web interface for creating and administering polis conversations. It is built with React.js.
 
----
+## Installation
+
+### Dependencies
+
+* Node `>= 16`
+We recommend installing [nvm](https://github.com/creationix/nvm) so that you can easily switch between your favorite
+flavors of node.
+* NPM `>= 8`
+
+If using nvm, run the commands below to install node and the application dependencies.
+
+```sh
+nvm install 18
+nvm use 18
+npm install
+```
+
+### Docker Build
+
+If you prefer to run the Polis application using `docker compose`, see the top-level README document. This component
+will be built and served as part of the `file-server` container.
+
+If you are building this container on its own, outside of the `docker compose` context, simply use the Dockerfile
+located in this directory. Optionally provide a "tag" for the image that is created:
+
+```sh
+docker build -t polis-client-admin:local .
+docker run -p 8080:8080 --name polis-client-admin polis-client-admin:local npm start
+```
+
+Now you can see the web interface at [http://localhost:8080], but if it is not connected to the Server API you won't
+get very far. Still it can be useful for developing and debugging builds.
 
 ## Configuration
 
-Install the NVM following the instructions: [NVM Installation Guide](https://github.com/creationix/nvm#install-script).
+### Facebook App Integration
 
-Them run the commands below to install the correct Node.JS version and the application dependencies.
+Optionally, you can [register with Facebook](https://developers.facebook.com/docs/development) and get a Facebook App ID
+to use the Facebook auth features.
 
-```sh
-nvm install 14.14.0
-npm install
-```
+If you do so, set the FB_APP_ID environment variable in the top level `.env` file, or manually pass it in
+when building and running this application.
+
+### Twitter Integration
+
+To enable twitter widgets for user authentication, set the ENABLE_TWITTER_WIDGETS environment variable to `true` in the
+top level `.env` file, or manually pass it in when building and running this application.
 
 ### Common Problems
 
 If you having troubles with npm dependencies try run the commands below:
 
 ```sh
-npm cache clear
+rm -rf node_modules
 npm install
 ```
 
 ## Running Application
 
+This will run the webpack dev server which will rebuild as you make changes.
+
 ```sh
-nvm use 14.14.0
 npm start
 ```
 
-## Running Tests
+Now you can see the web interface at [http://localhost:8080]. You will still need to run the rest of the Polis
+application components (via docker compose or otherwise) to have a functional interface.
 
-We aspire to use the Jest Testing Framework. We welcome contributors to help us write tests!
+The client-admin will look for an API server at whatever domain and port it is itself running on, e.g. `localhost`.
 
-```sh
-# Doesn't work right now. Will need to reinstall jest.
-npm test
-```
+_In the future this should become more customizable._
 
 ## Building for Production
 
@@ -48,4 +82,6 @@ To build static assets into `build/` for a production deployment, run
 npm run build:prod
 ```
 
-Deployment is currently performed via Docker, and so no other deployment scripts are provided.
+_The polis file-server process builds and serves these assets when docker compose is used._
+
+See the "scripts" section of the package.json file for other run and build options.

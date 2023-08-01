@@ -3,7 +3,7 @@
 var autosize = require("autosize");
 var constants = require("../util/constants");
 var CurrentUserModel = require("../stores/currentUser");
-var template = require("../tmpl/comment-form");
+var template = require("../templates/comment-form.handlebars");
 var display = require("../util/display");
 var eb = require("../eventBus");
 var Handlebones = require("handlebones");
@@ -13,6 +13,7 @@ var ProfilePicView = require('../views/profilePicView');
 var serialize = require("../util/serialize");
 var Strings = require("../strings");
 var Utils = require("../util/utils");
+var $ = require("jquery");
 
 var CHARACTER_LIMIT = constants.CHARACTER_LIMIT;
 
@@ -41,7 +42,7 @@ module.exports = Handlebones.ModelView.extend({
     ctx.is_active = this.parent.model.get("is_active");
     ctx.shouldAutofocusOnTextarea = this.shouldAutofocusOnTextarea || Utils.shouldFocusOnTextareaWhenWritePaneShown();
     ctx.hasTwitter = userObject.hasTwitter;
-    ctx.hasFacebook = userObject.hasFacebook;
+    ctx.hasFacebook = userObject.hasFacebook && Constants.FB_APP_ID;
     ctx.auth_opt_tw = preload.firstConv.auth_opt_tw;
     ctx.auth_opt_fb = preload.firstConv.auth_opt_fb;
     ctx.s = Strings;

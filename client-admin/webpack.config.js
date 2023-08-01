@@ -8,18 +8,17 @@ var HtmlWebPackPlugin = require('html-webpack-plugin');
 var EventHooksPlugin = require('event-hooks-webpack-plugin');
 var CopyPlugin = require("copy-webpack-plugin");
 var TerserPlugin = require("terser-webpack-plugin");
-var BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
-  .BundleAnalyzerPlugin
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 var mri = require('mri');
 var glob = require('glob');
 var fs = require('fs');
-var { boolean: isTrue } = require("boolean");
 
 // CLI commands for deploying built artefact.
 var argv = process.argv.slice(2)
 var cliArgs = mri(argv)
 
-var polisConfig = require("./polis.config");
+var enableTwitterWidgets = process.env.ENABLE_TWITTER_WIDGETS === 'true';
+var fbAppId = process.env.FB_APP_ID;
 
 module.exports = (env, options) => {
   var isDevBuild = options.mode === 'development';
@@ -52,18 +51,16 @@ module.exports = (env, options) => {
     plugins: [
       new CopyPlugin({
         patterns: [
-          { from: 'public', globOptions: { ignore: ['**/index.html']}},
+          { from: 'public', globOptions: { ignore: ['**/index.ejs']}},
         ],
       }),
       new HtmlWebPackPlugin({
-        template: path.resolve( __dirname, 'public/index.html' ),
+        template: path.resolve( __dirname, 'public/index.ejs' ),
         filename: (isDevBuild || isDevServer) ? 'index.html' : 'index_admin.html',
         inject: "body",
         templateParameters: {
-          domainWhitelist: `["${polisConfig.domainWhitelist.join('","')}"]`,
-          fbAppId: polisConfig.FB_APP_ID,
-          usePlans: !isTrue(polisConfig.DISABLE_PLANS),
-          useIntercom: !isTrue(polisConfig.DISABLE_INTERCOM),
+          enableTwitterWidgets: enableTwitterWidgets,
+          fbAppId: fbAppId,
         },
       }),
       new LodashModuleReplacementPlugin({
@@ -72,6 +69,9 @@ module.exports = (env, options) => {
         paths: true,
         placeholders: true,
         shorthands: true
+      }),
+      new webpack.DefinePlugin({
+        'process.env.FB_APP_ID': JSON.stringify(fbAppId),
       }),
       // Only run analyzer when specified in flag.
       ...(cliArgs.analyze ? [new BundleAnalyzerPlugin({ defaultSizes: 'gzip' })] : []),
@@ -135,7 +135,7 @@ module.exports = (env, options) => {
       rules: [
         {
           test: /\.m?js$/,
-          exclude: /(node_modules|bower_components)/,
+          exclude: /node_modules/,
           use: {
             loader: 'babel-loader',
             options: {

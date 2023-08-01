@@ -1,31 +1,58 @@
-FROM docker.io/node:19.4.0-bullseye
+# To build locally, for example:
+# docker build -t polis-server:local .
+# To run locally, for example:
+# docker run --rm --name polis-server --env-file .env --network polis-dev_polis-net \
+#  -p 5000:5000 --target dev polis-server:local
+#
+# For a dev build, use `--target dev`.
+# Should default to prod build, but you can also explicitly use `--target prod`
+
+FROM docker.io/node:18-alpine as base
+
+ARG NODE_ENV
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y libpq-dev python3-dev build-essential g++ git make python3
-# don't know if there's equivalent of this for debian, but worth considering; I think the idea here was that
-# these are only used for building, so can be dropped once the app is ready to run
-#RUN apk add --no-cache --virtual .build \
-  #g++ git make python3
+# This package is needed at runtime
+RUN apk add libpq-dev
+
+RUN apk add --no-cache --virtual .build \
+  g++ make python3
 
 COPY package*.json ./
 
-# TODO get `npm ci` to work
-RUN npm install
+EXPOSE 5000
 
-# again, consider switching back to this
-#RUN apk del .build
 
-# TODO This shouldn't be necessary; fix
-#RUN chown -R 1000:1000 /root/.npm
+# Define the development build
 
-# TODO This shouldn't be necessary; fix
-#RUN chown -R 1000:1000 /root/.npm
+FROM base as dev
+
+# Set default NODE_ENV to development unless overridden at build time with --build-arg NODE_ENV=production
+ENV NODE_ENV ${NODE_ENV:-development}
+
+COPY . .
+
+CMD npm run dev
+
+
+
+# Define the production build
+
+FROM base as prod
+
+# Set default NODE_ENV to production unless overridden at build time with --build-arg NODE_ENV=development
+ENV NODE_ENV ${NODE_ENV:-production}
+
+RUN npm ci --production=false
+
+# For prod builds, to minimize the image size, remove the dependencies tagged with `--virtual .build` above.
+RUN apk del .build
 
 COPY . .
 
 RUN npm run build
 
-EXPOSE 5000
-
 CMD npm run serve
+
+

@@ -1,7 +1,7 @@
 // Copyright (C) 2012-present, The Authors. This program is free software: you can redistribute it and/or  modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 var $ = require("jquery");
-var _ = require("underscore");
+var _ = require("lodash");
 var Backbone = require("backbone");
 var bbFetch = require("../net/bbFetch");
 var ConversationModel = require("../models/conversation");
@@ -11,11 +11,9 @@ var metric = require("../util/gaMetric");
 var ParticipantModel = require("../models/participant");
 var ParticipationView = require("../views/participation");
 var PolisStorage = require("../util/polisStorage");
-var PlanUpgradeView = require("../views/plan-upgrade");
 var preloadHelper = require("../util/preloadHelper");
 var RootView = require("../views/root");
-
-var SettingsEnterpriseView = require("../views/settingsEnterprise.js");
+var Constants = require("../util/constants");
 var SettingsView = require("../views/settings.js");
 
 var UserModel = require("../models/user");
@@ -32,7 +30,9 @@ var authenticatedDfd = $.Deferred();
 authenticatedDfd.done(function() {
   // link uid to GA userId
   // TODO update this whenever auth changes
-  ga('set', 'userId', PolisStorage.uid() || PolisStorage.uidFromCookie());
+  if (Constants.GA_TRACKING_ID) {
+    ga('set', 'userId', PolisStorage.uid() || PolisStorage.uidFromCookie());
+  }
 });
 
 function onFirstRender() {
@@ -61,7 +61,6 @@ var polisRouter = Backbone.Router.extend({
     this.r(/^demo\/([0-9][0-9A-Za-z]+)/, "demoConversation");
 
     this.r(/^settings(\/ep1_[0-9A-Za-z]+)?/, "settings");
-    this.r(/^settings\/enterprise(\/ep1_[0-9A-Za-z]+)?/, "settingsEnterprise");
 
     //this.r(/^summary\/([0-9][0-9A-Za-z]+)$/, "summaryView");  // summary/conversation_id
 
@@ -96,32 +95,6 @@ var polisRouter = Backbone.Router.extend({
   bail: function() {
     this.gotoRoute("/", {
       trigger: true
-    });
-  },
-
-  upgradePlan: function(plan_id) {
-    var promise;
-    if (!authenticated()) {
-      window.planId = plan_id;
-      promise = this.doLogin(false);
-    } else if (!hasEmail() && !window.authenticatedByHeader) {
-      window.planId = plan_id;
-      promise = this.doLogin(true);
-    } else {
-      if (_.isUndefined(plan_id) && !_.isUndefined(window.plan_id)) {
-        plan_id = window.planId;
-      }
-      promise = $.Deferred().resolve();
-    }
-    promise.then(function() {
-      var userModel = new UserModel();
-      bbFetch(userModel).then(function() {
-        var view = new PlanUpgradeView({
-          model: userModel,
-          plan_id: plan_id,
-        });
-        RootView.getInstance().setView(view);
-      });
     });
   },
 
@@ -164,32 +137,6 @@ var polisRouter = Backbone.Router.extend({
         });
     });
   },
-
-  settingsEnterprise: function(encodedStringifiedJson) {
-    var o = {};
-    if (encodedStringifiedJson && encodedStringifiedJson.length) {
-      o = Utils.decodeParams(encodedStringifiedJson);
-    }
-    // alert(o.monthly);
-    // alert(o.maxUsers);
-    var promise = $.Deferred().resolve();
-    if (!authenticated()) {
-      promise = this.doLogin(false);
-    } else if (!hasEmail()  && !window.authenticatedByHeader) {
-      promise = this.doLogin(true);
-    }
-    promise.then(function() {
-      var userModel = new UserModel();
-      bbFetch(userModel).then(function() {
-          var v = new SettingsEnterpriseView({
-            model: userModel,
-            proposal: o
-          });
-          RootView.getInstance().setView(v);
-        });
-    });
-  },
-
 
   deregister: function(dest) {
     window.deregister(dest);
