@@ -93,7 +93,7 @@ def build_and_cp_client(client_dir):
 
 # Note: edit the "dir_list" variable by hand for partial builds
 dir_list = ["client-admin", "client-report", "client-participation", ]
-dir_list = [ "client-report", ]
+dir_list = ["client-admin", "client-participation", ]
 for client_dir in dir_list:
   start_time = time.time()
   print(f"Building {client_dir}")
