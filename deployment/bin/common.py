@@ -3,6 +3,8 @@ import pydig
 import copy
 import subprocess
 import datetime
+import logging
+import delta_log_formatter
 
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)

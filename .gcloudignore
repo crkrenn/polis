@@ -1,5 +1,87 @@
-#!include:.gitignore
-#!include:.dockerignore
 # gcloud meta list-files-for-upload
 e2e/
 venv*/
+
+### SublimeText ###
+*.sublime-workspace
+
+### OSX ###
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# VCS
+.git
+
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+### Windows ###
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# App specific
+__pycache__
+.bashrc
+.cpcache/
+.google_creds_temp
+.gorilla-port
+.lein-deps-sum
+.lein-env
+.lein-failures
+.lein-git-deps/debug-repl
+.lein-git-deps/hiphip
+.lein-plugins
+.lein-repl-history
+.nrepl-port
+.polis_s3_creds_client.json
+.polis_scp_creds_client.json
+.sass-cache/*
+.terraform*
+*.class
+*.jar
+*.log
+*.swo
+*tfstate*
+/checkouts
+/classes
+/lib
+/target
+bower_components
+build
+build/
+cypress/screenshots
+cypress/videos
+data
+devel
+dist
+dist/*/target
+fs_config.json
+js/tmpl/
+node_modules
+node_modules/
+npm-debug.log
+old
+polisStatic/
+pom.xml
+pom.xml.asc
+scratch
+src/polismath/play.clj
+terraform*tfstate*
+venv*/
+wiki
+
+

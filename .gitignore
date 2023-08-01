@@ -1,8 +1,85 @@
-prod.env
-dev.env
-docker_temp.env
-.cpcache/
-venv*/
-.terraform*
+### OSX ###
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# App specific
 __pycache__
+.bashrc
+.cpcache/
+.env
+.env_always
+.env_dev
+.google_creds_temp
+.gorilla-port
+.lein-deps-sum
+.lein-env
+.lein-failures
+.lein-git-deps/debug-repl
+.lein-git-deps/hiphip
+.lein-plugins
+.lein-repl-history
+.nrepl-port
+.polis_env
+.polis_s3_creds_client.json
+.polis_scp_creds_client.json
+.sass-cache/*
+.terraform*
+*.class
+*.jar
+*.log
+*.swo
+/checkouts
+/classes
+/lib
+bower_components
+build
+build/
+cypress/screenshots
+cypress/videos
+data
+db/
+devel
+dev.env
+dist
+dist/*/target
+docker_temp.env
+fs_config.json
+js/tmpl/
+node_modules
+node_modules/
+npm-debug.log
+old
+polis.config
 polis.config.js
+pom.xml
+pom.xml.asc
+prod.env
+scratch
+src/polismath/play.clj
+venv*/
+wiki
+
+### SublimeText ###
+*.sublime-workspace
+
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+### Windows ###
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+

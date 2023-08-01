@@ -20,12 +20,14 @@ PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 	$(eval ENV_FILE = prod.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
+	@make docker_env
 
 DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
 	@echo Running in dev mode
 	$(eval ENV_FILE = dev.env)
 	$(eval include ${ENV_FILE})
 	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
+	@make docker_env
 
 export DOCKER_DETACHED=--detach
 
@@ -38,6 +40,7 @@ docker_env:
 
 clean: ## reset push-images, so they will be rerun
 	@rm -f push-images
+	@rm -f ${DOCKER_ENV}
 
 verify-project:
 	@if [ -z ${GCP_PROJECT_ID} ]; then \
@@ -62,7 +65,7 @@ delete-gcp-images: ## delete gcp images
 	export IMAGE_REPO=${IMAGE_REPO}; \
 	export AWS_REGION=${AWS_REGION}; \
 	docker context use ${LOCAL_DOCKER_CONTEXT}; \
-	../bin/delete_images.py
+	../bin/delete_gcp_images.py
 
 push-images: ## push images to AWS ECR
 	@make verify-project
@@ -80,7 +83,7 @@ start-local: docker_env echo_vars ## Start all Docker containers on local machin
 
 stop-local: docker_env echo_vars ## Start all Docker containers on local machine
 	docker context use ${LOCAL_DOCKER_CONTEXT}; \
-	docker-compose --env-file ${DOCKER_ENV} down ${DOCKER_DETACHED}
+	docker-compose --env-file ${DOCKER_ENV} down
 
 stop-ALL:  ## Stop all running containers
 	@-docker container stop $(shell docker container ls -q)
@@ -157,6 +160,8 @@ stack-status: verify-aws-region ## summary of stack status
 	@export AWS_REGION=${AWS_REGION}; \
 	aws cloudformation list-stack-resources \
 		--stack-name ${SERVICE_NAME}-stack | \
+	jq '.StackResourceSummaries[] | \
+		select(.ResourceStatus | test("COMPLETE") | not)' | \
 		grep -e LogicalResourceId -e ResourceStatus
 
 noop:
@@ -188,9 +193,101 @@ show-stack-drift: cloud-compose-edit ## show stack drift summary
 		grep -B1 -e "StackResourceDriftStatus.*MODIFIED" \
 			-e "StackResourceDriftStatus.*NOT"
 
+# restart-fileserver: verify-aws-region ## restart fileserver service
+# 	@export AWS_REGION=${AWS_REGION}; \
+# 	aws ecs update-service \
+# 		--force-new-deployment \
+# 		--service FileserverService \
+# 		--cluster ${SERVICE_NAME}
+
+# restart each service individually and all together
+# ITEMS = item1 item2 item3
+
+# # Define a target for each item
+# $(ITEMS):
+# 	# Recipe to run on each item
+# 	echo "Running recipe on $@"
+# 	# ...
+# NUMBERS = 1 2 3 4
+# doit:
+#         $(foreach var,$(NUMBERS),./a.out $(var);)
+
+        #   "PhysicalResourceId": "arn:aws:ecs:us-east-2:714774317425:service/polis3/polis3-stack-FileserverService-xha10PDWtslu",
+        #     "PhysicalResourceId": "arn:aws:ecs:us-east-2:714774317425:service/polis3/polis3-stack-MathService-P7FCs9SDiBKT",
+        #     "PhysicalResourceId": "arn:aws:ecs:us-east-2:714774317425:service/polis3/polis3-stack-NginxproxyService-XJGqZkHvTiEc",
+        #     "PhysicalResourceId": "arn:aws:ecs:us-east-2:714774317425:service/polis3/polis3-stack-PostgresService-RpnL775hxJrM",
+        #     "PhysicalResourceId": "arn:aws:ecs:us-east-2:714774317425:service/polis3/polis3-stack-ServerService-QCTbd7MYeoAt",
+
+# restart-service: RESTART_SERVICE_VARIABLE = ${RESTART_SERVICE}
+restart-service: verify-aws-region ## restart fileserver service
+	@echo "Restarting: ${RESTART_SERVICE_VARIABLE}"
+	@exit 1
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation list-stack-resources \
+		--stack-name "${SERVICE_NAME}-stack" | \
+	jq '.StackResourceSummaries[] | \
+		select(.LogicalResourceId | test(${RESTART_SERVICE_VARIABLE})) | \
+		select(.ResourceType | test("AWS::ECS::Service")) | \
+		.PhysicalResourceId' | \
+	xargs aws ecs update-service \
+		--force-new-deployment \
+		--cluster ${SERVICE_NAME} \
+		--service
+
+test1:
+	$(eval RESTART_SERVICE_VARIABLE = test1)
+	make restart-service
+
+test2:
+	$(eval RESTART_SERVICE_VARIABLE = test2)
+	make restart-service
+
+
+restart-fileserver: verify-aws-region ## describe stack
+	@export AWS_REGION=${AWS_REGION}; \
+	aws cloudformation list-stack-resources \
+		--stack-name "${SERVICE_NAME}-stack" | \
+	jq '.StackResourceSummaries[] | \
+		select(.LogicalResourceId | test("FileserverService")) | \
+		select(.ResourceType | test("AWS::ECS::Service")) | \
+		.PhysicalResourceId' | \
+	xargs aws ecs update-service \
+		--force-new-deployment \
+		--cluster ${SERVICE_NAME} \
+		--service
+
+noop:
+	jq '.StackResourceSummaries.[] | \
+		select(.LogicalResourceId | test("^FileserverService$")) | \
+		.PhysicalResourceId'
+	aws cloudformation list-stack-resources \
+		--stack-name ${SERVICE_NAME}-stack | \
+		jq '.StackResourceSummaries.[] | \
+		select(.LogicalResourceId | test("FileserverService"))'
+
+
+	select(.LogicalResourceId | \
+		test("FileserverService")) | .PhysicalResourceId'
+		 | \
+	xargs aws ecs update-service \
+		--force-new-deployment \
+		--cluster ${SERVICE_NAME} \
+		--service
+
+
+# make DEV describe-stack | jq -r ".StackResourceSummaries"
+
+# aws ecs update-service --force-new-deployment --service my-service --cluster cluster-name
+# FileserverService
+
 delete-stack:  verify-aws-region ## delete running stack
 	@export AWS_REGION=${AWS_REGION}; \
 	aws cloudformation delete-stack --stack-name ${SERVICE_NAME}-stack
+
+# FileserverService
+#  # | select(.LogicalResourceId | test("FileserverService"))'
+
+# '
 
 
 # #!/usr/../bin/env make

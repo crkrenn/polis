@@ -3,8 +3,9 @@
 import sys
 import os
 import yaml
-import subprocess
+# import subprocess
 import pprint
+import tempfile
 
 try:
     DOCKER_COMPOSE_FILE = os.environ["DOCKER_COMPOSE_FILE"]
@@ -92,7 +93,7 @@ build_dict = {
 with open('cloudbuild.yaml', 'w') as file:
     yaml.dump(build_dict, file, sort_keys=False)
 
-print(f"Beginning build of images")
-cmd = (f"gcloud artifacts repositories create {image} --repository-format=docker "
-        f"--location={GCP_REGION} --description=\"Docker repository\"")
-result = subprocess.run(cmd, shell=True, capture_output=True)
+# print(f"Beginning build of images")
+# cmd = (f"gcloud artifacts repositories create {image} --repository-format=docker "
+#         f"--location={GCP_REGION} --description=\"Docker repository\"")
+# result = subprocess.run(cmd, shell=True, capture_output=True)
