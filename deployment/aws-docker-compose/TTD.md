@@ -13,3 +13,5 @@ plan: remove all entries from whitelist?
 plan: add diagnostic for whitelist that includes URL.
 
 add whitelist content to URL error message
+
+Plan: remove client-report; run gcp-build in a temp directory with a clean git clone
