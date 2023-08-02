@@ -56,3 +56,5 @@ polis.config.js
 pom.xml
 pom.xml.asc
 prod.env
+e2e/cypress/screenshots
+e2e/cypress/videos
