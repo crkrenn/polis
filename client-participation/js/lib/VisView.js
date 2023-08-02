@@ -145,7 +145,7 @@ module.exports = function VisView(params) {
   // Since initialize is called on resize, clear the old vis before setting up the new one.
   $(el_selector + " > .visualization").remove();
 
-  /* d3-tip === d3 tooltips... [[$ bower install --save d3-tip]] api docs avail at https://github.com/Caged/d3-tip */
+  /* d3-tip === d3 tooltips... api docs avail at https://github.com/Caged/d3-tip */
   var tip = null;
   // var SHOW_TIP = true;
   // if (SHOW_TIP) {
@@ -469,7 +469,7 @@ module.exports = function VisView(params) {
 
 
   function updateHulls() {
-    bidToBucket = _.zipObject(_.map(nodes, "bid"), nodes);
+    bidToBucket = _.fromPairs(_.map(nodes, "bid"), nodes);
     hulls = clusters.map(function(cluster) {
       var temp = _.map(cluster, function(bid) {
         var bucket = bidToBucket[bid];

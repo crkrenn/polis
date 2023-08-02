@@ -1,98 +1,103 @@
-ARG TAG=dev
-
-# polis-client-admin
-FROM docker.io/node:11.15.0-alpine AS client-base
-
-RUN apk add git g++ make python openssh --no-cache
-
-
-
-# polis-client-admin
+######################## POLIS CLIENT ADMIN ########################
 #FROM client-base AS client-admin # <- switch back to basing on client admin once we upgrade other clients
-FROM docker.io/node:14.15.0-alpine AS client-admin
+FROM docker.io/node:18-alpine AS client-admin
 
-WORKDIR /client-admin/app
+ARG ENABLE_TWITTER_WIDGETS
+ARG FB_APP_ID
+ENV ENABLE_TWITTER_WIDGETS ${ENABLE_TWITTER_WIDGETS}
+ENV FB_APP_ID ${FB_APP_ID}
+
+# Set default NODE_ENV to production unless overridden at build time with --build-arg NODE_ENV=development
+ARG NODE_ENV
+ENV NODE_ENV ${NODE_ENV:-production}
+
+WORKDIR /app
 
 COPY client-admin/package*.json ./
-RUN npm install
 
-COPY client-admin/polis.config.template.js polis.config.js
-# If polis.config.js exists on host, will override template here.
+RUN npm ci --production=false
+
 COPY client-admin/. .
 
-ARG GIT_HASH
 RUN npm run build:prod
 
 
 
-# polis-client-participation
-# # Gulp v3 stops us from upgrading beyond Node v11
-FROM docker.io/node:16.18.0-alpine AS client-participation
+##################### POLIS CLIENT PARTICIPATION #####################
+FROM docker.io/node:18-alpine AS client-participation
 
-WORKDIR /client-participation/app
+ARG EMBED_SERVICE_HOSTNAME
+ARG FB_APP_ID
+ARG GA_TRACKING_ID
+ENV EMBED_SERVICE_HOSTNAME ${EMBED_SERVICE_HOSTNAME}
+ENV FB_APP_ID ${FB_APP_ID}
+ENV GA_TRACKING_ID ${GA_TRACKING_ID}
 
-# Allow global npm installs in Docker
-RUN npm config set unsafe-perm true
+# Set default NODE_ENV to production unless overridden at build time with --build-arg NODE_ENV=development
+ARG NODE_ENV
+ENV NODE_ENV ${NODE_ENV:-production}
 
-# Upgrade npm v6.7.0 -> v6.9.2 to alias multiple pkg versions.
-# See: https://stackoverflow.com/a/56134858/504018
-RUN npm install -g npm@8.19.2
+WORKDIR /app
 
 COPY client-participation/package*.json ./
 
-# It would be nice if this was ci, but misbehaving for some reason
-RUN npm install
+RUN npm ci --production=false
 
-COPY client-participation/polis.config.template.js polis.config.js
-# If polis.config.js exists on host, will override template here.
 COPY client-participation/. .
-
-ARG GIT_HASH
-ARG BABEL_ENV=production
 
 RUN npm run build:prod
 
 
-# # polis-client-report
-# # Gulp v3 stops us from upgrading beyond Node v11
+
+######################## POLIS CLIENT REPORT ########################
 # FROM client-base AS client-report
+FROM docker.io/node:18-alpine AS client-report
 
-# WORKDIR /client-report/app
+# Set default NODE_ENV to production unless overridden at build time with --build-arg NODE_ENV=development
+ARG NODE_ENV
+ENV NODE_ENV ${NODE_ENV:-production}
 
-# COPY client-report/package*.json ./
-# # This should be working with `npm ci`, but isn't; Need to debug
-# RUN npm install
+WORKDIR /app
 
-# COPY client-report/polis.config.template.js polis.config.js
-# # If polis.config.js exists on host, will override template here.
-# COPY client-report/. .
+RUN apk add git
 
-# ARG GIT_HASH
-# RUN npm run deploy:prod
+COPY client-report/package*.json ./
+
+RUN npm ci --production=false
+
+COPY client-report/. .
+
+# GIT_HASH will be set properly when running `make` (see Makefile).
+ARG GIT_HASH
+ARG SERVICE_URL
+ENV GIT_HASH ${GIT_HASH:-placeholder}
+ENV SERVICE_URL ${SERVICE_URL}
+
+RUN npm run build:prod
 
 
 
-# actual file server component
-FROM docker.io/node:16.9.0-alpine
+############################ FILE SERVER ############################
+FROM docker.io/node:18-alpine
+
+# Set default NODE_ENV to production unless overridden at build time with --build-arg NODE_ENV=development
+ARG NODE_ENV
+ENV NODE_ENV ${NODE_ENV:-production}
 
 WORKDIR /app
 
 COPY file-server/package*.json ./
 
-RUN npm install
+RUN npm ci
 
-COPY file-server/fs_config.template.json fs_config.json
-# If fs_config.json exists, will override the template here.
 COPY file-server/. .
 
 # use the multi-stage builds above to copy out the resources
 RUN mkdir /app/build
-COPY --from=client-admin         /client-admin/app/build/         /app/build
-COPY --from=client-participation /client-participation/app/dist/  /app/build
-# COPY --from=client-report        /client-report/app/build/        /app/build
+COPY --from=client-admin          /app/build/       /app/build
+COPY --from=client-participation  /app/dist/        /app/build
+COPY --from=client-report         /app/build/       /app/build
 
 EXPOSE 8080
 
-CMD node --max_old_space_size=400 --gc_interval=100 --harmony app.js
-
-
+CMD npm run serve

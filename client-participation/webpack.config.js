@@ -9,10 +9,11 @@ const lodashTemplate = require('lodash/template')
 const glob = require('glob')
 const fs = require('fs')
 const pkg = require('./package.json')
-
-const polisConfig = require('./polis.config')
 const TerserPlugin = require("terser-webpack-plugin")
 
+const embedServiceHostname = process.env.EMBED_SERVICE_HOSTNAME || 'pol.is';
+const fbAppId = process.env.FB_APP_ID;
+const gaTrackingId = process.env.GA_TRACKING_ID;
 const outputDirectory = 'dist'
 
 /**
@@ -109,24 +110,24 @@ module.exports = (env, options) => {
       }),
       new CopyPlugin({
         patterns: [
-          { from: 'public', globOptions: { ignore: ['**/index.html'] } },
+          { from: 'public', globOptions: { ignore: ['**/index.ejs'] } },
           { from: 'api', globOptions: { ignore: ['**/embed.js'] } },
           {
             from: 'api/embed.js',
             transform(content, absoluteFrom) {
-              return lodashTemplate(content.toString())({ polisHostName: polisConfig.SERVICE_HOSTNAME })
+              return lodashTemplate(content.toString())({ embedServiceHostname })
             }
           },
           { from: 'node_modules/font-awesome/fonts/**/*', to: './fonts/[name][ext]' }
         ]
       }),
       new HtmlWebPackPlugin({
-        template: path.resolve(__dirname, 'public/index.html'),
+        template: path.resolve(__dirname, 'public/index.ejs'),
         filename: 'index.html',
         templateParameters: {
-          domainWhitelist: `["${polisConfig.domainWhitelist.join('","')}"]`,
           versionString: pkg.version,
-          fbAppId: polisConfig.FB_APP_ID
+          fbAppId: fbAppId,
+          gaTrackingId: gaTrackingId,
         }
       }),
       // Generate the .headersJson files ...
@@ -135,6 +136,10 @@ module.exports = (env, options) => {
           console.log('Writing *.headersJson files...')
           writeHeadersJsonForOutputFiles(isDevBuild || isDevServer)
         }
+      }),
+      new webpack.DefinePlugin({
+        'process.env.FB_APP_ID': JSON.stringify(fbAppId),
+        'process.env.GA_TRACKING_ID': JSON.stringify(gaTrackingId),
       }),
       // Only compress files during production builds.
       ...((isDevBuild || isDevServer) ? [] : [
