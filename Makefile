@@ -32,6 +32,11 @@ TEST: ## Run in test mode (e.g. `make TEST start`, etc.)
 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
+CRK: ## Run in crk mode (e.g. `make CRK start`, etc.)
+	$(eval ENV_FILE = test.env)
+	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml )
+
 echo_vars:
 	@echo ENV_FILE=${ENV_FILE}
 	@echo TAG=${TAG}
@@ -77,6 +82,53 @@ build-no-cache: echo_vars ## Build all Docker containers without cache
 start-recreate: echo_vars ## Start all Docker containers with recreated environments
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --force-recreate
 
+build-static-assets: ## Build static assets
+	cd client-participation && \
+	npm install webpack && \
+	npm run build:prod
+	cd client-admin && \
+	npm install webpack && \
+	npm run build:prod
+	cd client-report && \
+	npm install gulp && \
+	npm run build:prod
+	cd static_files && \
+	/bin/rm -rf * && \
+	touch README.md && \
+	cd .. && \
+	cp -r client-participation/dist/* static_files/ && \
+	cp -r client-admin/build/* static_files/ && \
+	cp -r client-report/dist/* static_files/ && \
+	cd static_files && \
+	ln -sf index.html index_admin.html
+
+build-static-assets-dev: ## Build static assets
+	cd client-participation && \
+	npm install webpack && \
+	npm run build:dev
+	cd client-admin && \
+	npm install webpack && \
+	npm run build:dev
+	cd client-report && \
+	npm install gulp && \
+	npm run build:prod
+
+deploy-static-assets-local: ## Deploy static assets locally
+	cd static_files && \
+	/bin/rm -rf * && \
+	touch README.md && \
+	cd .. && \
+	cp -r client-admin/build/* static_files/ && \
+	cd static_files && \
+	mv index.html index_admin.html && \
+	cd .. && \
+	cp -r client-participation/dist/* static_files/ && \
+	cp -r client-report/dist/* static_files/
+
+
+serve-static-assets: ## Serve static assets
+	cd static_files && \
+	python -m http.server 8080
 
 
 # @TTD: fix this; it doesn't work if DOCKER_DEFAULT_PLATFORM is not set

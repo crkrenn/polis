@@ -8,7 +8,7 @@ const Index = () => {
   return (
     <Layout>
       <Heading as="h1" sx={{ my: [4, null, 5], fontSize: [6, null, 7] }}>
-        Input Crowd, Output Meaning
+        Input Crowd, Output Meanings
       </Heading>
       <Heading
         as="h3"
