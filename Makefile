@@ -125,7 +125,26 @@ deploy-static-assets-local: ## Deploy static assets locally
 	cp -r client-participation/dist/* static_files/ && \
 	cp -r client-report/dist/* static_files/
 
+deploy-static-assets-docker: ## Deploy static assets locally
+	@cd static_files && \
+	/bin/rm -rf * && \
+	touch README.md && \
+	cd .. && \
+	CONTAINER_ID=$$(docker ps | grep 'polis-file-server' | awk '{print $$1}') && \
+	echo "CONTAINER_ID=$${CONTAINER_ID}" && \
+	docker cp $${CONTAINER_ID}:/app/build static_files/ && \
+	cd static_files/build && \
+	mv * .. && \
+	cd .. && \
+	rmdir build
 
+noop:
+	cp -r client-admin/build/* static_files/ && \
+	cd static_files && \
+	mv index.html index_admin.html && \
+	cd .. && \
+	cp -r client-participation/dist/* static_files/ && \
+	cp -r client-report/dist/* static_files/
 serve-static-assets: ## Serve static assets
 	cd static_files && \
 	python -m http.server 8080
