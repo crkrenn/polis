@@ -31,11 +31,16 @@ FROM base as dev
 # Set default NODE_ENV to development unless overridden at build time with --build-arg NODE_ENV=production
 ENV NODE_ENV ${NODE_ENV:-development}
 
+RUN npm ci --production=false
+
 COPY . .
 
-CMD npm run dev
+RUN npm run build
 
+RUN ls -al /app/dist
 
+# CMD npm run dev
+CMD npm run serve
 
 # Define the production build
 
@@ -52,6 +57,8 @@ RUN apk del .build
 COPY . .
 
 RUN npm run build
+
+RUN ls -al /app/dist
 
 CMD npm run serve
 
