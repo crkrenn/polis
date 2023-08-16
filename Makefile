@@ -73,6 +73,34 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build
 
+cp-static-assets-docker-helper: # Deploy static assets locally
+	@echo "One polis-file-server container found. Copying files...";
+	@if [ -d "static_files" ]; then \
+		cd static_files; \
+	else \
+		mkdir static_files && cd static_files; \
+	fi; \
+	/bin/rm -rf * && \
+	touch README.md && \
+	cd .. && \
+	CONTAINER_ID=$$(docker ps | grep 'polis-file-server' | awk '{print $$1}') && \
+	echo "CONTAINER_ID=$${CONTAINER_ID}" && \
+	docker cp $${CONTAINER_ID}:/app/build static_files/ && \
+	cd static_files/build && \
+	mv * .. && \
+	cd .. && \
+	rmdir build
+
+cp-static-assets-docker: ## Copy static assets from polis-file-server container to static_files
+	$(eval CONTAINER_COUNT=$(shell docker ps | grep 'polis-file-server' | wc -l))
+	@if [ "$(CONTAINER_COUNT)" -eq "0" ]; then \
+		echo "No polis-file-server containers found. Exiting."; \
+	elif [ "$(CONTAINER_COUNT)" -eq "1" ]; then \
+		make cp-static-assets-docker-helper; \
+	else \
+		echo "Multiple polis-file-server containers found. Exiting."; \
+	fi
+
 e2e-install: e2e/node_modules ## Install Cypress E2E testing tools
 	$(E2E_RUN) npm install
 
