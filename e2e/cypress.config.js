@@ -1,4 +1,4 @@
-const { defineConfig } = require('cypress');
+const { defineConfig } = require('cypress')
 
 // One way to run Cypress against a different url is to pass CYPRESS_BASE_URL env variable,
 // e.g. CYPRESS_BASE_URL=http://localhost:5000 npm test
@@ -9,17 +9,16 @@ module.exports = defineConfig({
   // required to test within iframe:
   chromeSecurity: false,
   requestTimeout: 10000,
-  chromeWebSecurity: false,  // <-- Here's the added configuration
   e2e: {
     baseUrl: 'http://localhost',
     experimentalRunAllSpecs: true,
     video: false,
     setupNodeEvents(on /*, config*/) {
       // implement node event listeners here
-      require('cypress-terminal-report/src/installLogsPrinter')(on);
+      require('cypress-terminal-report/src/installLogsPrinter')(on)
     },
   },
   env: {
     maildevUrl: 'http://localhost:1080',
   },
-});
+})

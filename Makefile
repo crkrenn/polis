@@ -6,6 +6,7 @@
 
 SHELL=/bin/bash
 E2E_RUN = cd e2e;
+STATIC_FILES = static_files
 
 export ENV_FILE = .env
 export TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,""); print $$2}')
@@ -117,7 +118,10 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 
 cp-static-assets-docker-helper: # Deploy static assets locally
 	@echo "One polis-file-server container found. Copying files...";
-	@if [ -d "${STATIC_FILES}" ]; then \
+	@if [ -z "${STATIC_FILES}" ]; then \
+		echo "Error: STATIC_FILES is not defined."; \
+		exit 1; \
+	elif [ -d "${STATIC_FILES}" ]; then \
 		cd ${STATIC_FILES}; \
 	else \
 		mkdir ${STATIC_FILES} && cd ${STATIC_FILES}; \
