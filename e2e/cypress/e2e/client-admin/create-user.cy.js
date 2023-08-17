@@ -2,13 +2,11 @@ import { generateRandomUser } from '../../support/helpers'
 
 describe('Create User page', function () {
   it('should redirect unauthenticated user to signin page', function () {
-    cy.visit('/signout')
     cy.visit('/account')
     cy.location('pathname').should('eq', '/signin')
   })
 
   it('should allow a visitor to register, log out, and log in, via UI', function () {
-    cy.visit('/signout')
     const user = generateRandomUser()
     cy.visit('/home')
     cy.contains('a[href="/createuser"]', 'Sign up').click()
@@ -18,7 +16,6 @@ describe('Create User page', function () {
     // Register User
     cy.registerViaUI(user)
     cy.visit('/')
-    // cy.contains('All Conversations').should('be.visible');
 
     cy.location('pathname').should('eq', '/')
     cy.getCookie('token2').should('exist')
@@ -46,8 +43,6 @@ describe('Create User page', function () {
   })
 
   it('should allow a visitor to register, log out, and log in, via API', function () {
-    cy.visit('/signout')
-
     const user = generateRandomUser()
 
     cy.register(user)
@@ -64,8 +59,6 @@ describe('Create User page', function () {
   })
 
   it('should give an error if a user tries to register with an existing email', function () {
-    cy.visit('/signout')
-
     const user = generateRandomUser()
 
     cy.register(user)

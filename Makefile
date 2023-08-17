@@ -19,6 +19,9 @@ PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 
 TEST: ## Run in test mode (e.g. `make TEST start`, etc.)
 	$(eval ENV_FILE = test.env)
+	@cd math && \
+	/bin/rm -f .env && \
+	ln -s ../${ENV_FILE} .env
 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
