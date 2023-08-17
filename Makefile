@@ -27,6 +27,9 @@ TEST: ## Run in test mode (e.g. `make TEST start`, etc.)
 .PHONY: DEV-CLOUD
 DEV-CLOUD: ## Run in test mode (e.g. `make TEST start`, etc.)
 	$(eval ENV_FILE = dev-cloud.env)
+	@cd math && \
+	/bin/rm -f .env && \
+	ln -s ../${ENV_FILE} .env
 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_BUCKET_NAME = $(shell grep -e ^GCP_BUCKET_NAME ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_PROJECT = $(shell grep -e ^GCP_PROJECT ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
