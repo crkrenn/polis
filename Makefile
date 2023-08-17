@@ -64,6 +64,34 @@ rm-images: echo_vars ## Remove Docker images where (polis_tag="${TAG}")
 rm-ALL: rm-containers rm-volumes rm-images ## Remove Docker containers, volumes, and images where (polis_tag="${TAG}")
 	@echo Done.
 
+rm-single-image: ## Remove Docker image that matches REGEXP (e.g. make rm-single-image REGEXP='file-server.*test')
+	@if [ "$(REGEXP)" = "" ]; then \
+		echo "REGEXP is not defined"; \
+		echo "Please use: make rm-single-image REGEXP='file-server.*test'"; \
+		exit 1; \
+	fi
+	@MATCH_COUNT=$$(docker images | grep -E "$(REGEXP)" | wc -l); \
+	if [ "$$MATCH_COUNT" -gt 1 ]; then \
+		echo "Error: REGEXP matches more than one image"; \
+		exit 1; \
+	elif [ "$$MATCH_COUNT" -eq 0 ]; then \
+		echo "No matching images found."; \
+		exit 0; \
+	else \
+		echo "REGEXP: $(REGEXP)"; \
+		docker-compose down; \
+		docker images \
+		| grep -E "$(REGEXP)" \
+		| awk '{print $$3}' \
+		| xargs docker rmi 2>&1 \
+		| awk '{print $$NF}' \
+		| xargs docker rm; \
+		docker images \
+		| grep -E "$(REGEXP)" \
+		| awk '{print $$3}' \
+		| xargs docker rmi; \
+	fi
+
 hash: ## Show current short hash
 	@echo Git hash: ${GIT_HASH}
 
@@ -176,6 +204,9 @@ e2e-run-subset: ## Run E2E tests: filter tests by TEST_FILTER envvar (without br
 e2e-run-all: ## Run E2E tests: all
 	$(E2E_RUN) npm run e2e:all
 
+e2e-run-interactive: ## Run E2E tests interactively
+	# @TODO: interactive does not work with BASEURL ?= https://127.0.0.1.sslip.io
+	cd e2e; npx cypress open
 
 # Helpful CLI shortcuts
 rbs: start-rebuild

@@ -35,6 +35,10 @@ Cypress.Commands.add('registerViaUI', (user) => {
   cy.get('form button#createUserButton').click()
   cy.wait('@register')
 
+  // Needed for slower remote db connections
+  cy.contains('Creating Account...').should('be.visible');
+  cy.contains('Creating Account...').should('not.exist');
+
   // Conditionally check if the user already exist.
   // If the user already exists, log them in.
   cy.get('#root').then(($root) => {
