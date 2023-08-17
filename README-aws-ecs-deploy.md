@@ -1,4 +1,11 @@
-# use clojure scripts to build static assets and run locally
-# test cloud postgress
-# test google spanner
-# 
+# Test: local docker
+
+# Dev-cloud
+
+* test neon database
+
+# Prod-cloud
+
+# Future
+
+* <https://cloud.google.com/spanner/docs/pgadapter>

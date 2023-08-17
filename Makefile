@@ -8,6 +8,7 @@ SHELL=/bin/bash
 
 BASEURL ?= https://127.0.0.1.sslip.io
 E2E_RUN = cd e2e; CYPRESS_BASE_URL=$(BASEURL)
+STATIC_FILES = static_files
 export ENV_FILE = .env
 export TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,""); print $$2}')
 export GIT_HASH = $(shell git rev-parse --short HEAD)
@@ -21,6 +22,15 @@ PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 TEST: ## Run in test mode (e.g. `make TEST start`, etc.)
 	$(eval ENV_FILE = test.env)
 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
+
+.PHONY: DEV-CLOUD
+DEV-CLOUD: ## Run in test mode (e.g. `make TEST start`, etc.)
+	$(eval ENV_FILE = dev-cloud.env)
+	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+	$(eval GCP_BUCKET_NAME = $(shell grep -e ^GCP_BUCKET_NAME ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+	$(eval GCP_PROJECT = $(shell grep -e ^GCP_PROJECT ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+	$(eval GCP_BUCKET_LOCATION = $(shell grep -e ^GCP_BUCKET_LOCATION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
 echo_vars:
@@ -75,23 +85,33 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 
 cp-static-assets-docker-helper: # Deploy static assets locally
 	@echo "One polis-file-server container found. Copying files...";
-	@if [ -d "static_files" ]; then \
-		cd static_files; \
+	@if [ -d "${STATIC_FILES}" ]; then \
+		cd ${STATIC_FILES}; \
 	else \
-		mkdir static_files && cd static_files; \
+		mkdir ${STATIC_FILES} && cd ${STATIC_FILES}; \
 	fi; \
 	/bin/rm -rf * && \
 	touch README.md && \
 	cd .. && \
 	CONTAINER_ID=$$(docker ps | grep 'polis-file-server' | awk '{print $$1}') && \
 	echo "CONTAINER_ID=$${CONTAINER_ID}" && \
-	docker cp $${CONTAINER_ID}:/app/build static_files/ && \
-	cd static_files/build && \
+	docker cp $${CONTAINER_ID}:/app/build ${STATIC_FILES}/ && \
+	cd ${STATIC_FILES}/build && \
 	mv * .. && \
 	cd .. && \
-	rmdir build
+	rmdir build && \
+	cd .. && \
+	make gunzip-nonsuffix-files DIR=${STATIC_FILES}
 
-cp-static-assets-docker: ## Copy static assets from polis-file-server container to static_files
+gunzip-nonsuffix-files:
+	@cd ${DIR} && find . -type f ! -name "*.gz" -print | while read -r file; do \
+		if file "$$file" | grep -q "gzip compressed"; then \
+			echo "Gunzipping $$file"; \
+			gunzip -c "$$file" > "$$file.unzipped" && mv "$$file.unzipped" "$$file"; \
+		fi \
+	done
+
+cp-static-assets-docker: ## Copy static assets from polis-file-server container to STATIC_FILES directory
 	$(eval CONTAINER_COUNT=$(shell docker ps | grep 'polis-file-server' | wc -l))
 	@if [ "$(CONTAINER_COUNT)" -eq "0" ]; then \
 		echo "No polis-file-server containers found. Exiting."; \
@@ -100,6 +120,36 @@ cp-static-assets-docker: ## Copy static assets from polis-file-server container 
 	else \
 		echo "Multiple polis-file-server containers found. Exiting."; \
 	fi
+
+serve-static-assets: ## Serve static assets
+	cd ${STATIC_FILES} && \
+	python -m http.server 8080
+
+upload-gcp-static-assets: create-gcp-bucket ## Upload static assets to GCP bucket
+	gsutil -m cp -r ${STATIC_FILES}/* gs://${GCP_BUCKET_NAME}/
+
+create-gcp-bucket: # Create GCP bucket if it doesn't exist
+	@if [ -z "$(GCP_BUCKET_NAME)" ]; then \
+		echo "Error: GCP_BUCKET_NAME is not defined."; \
+		exit 1; \
+	fi
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	@if [ -z "$(GCP_BUCKET_LOCATION)" ]; then \
+		echo "Error: GCP_BUCKET_LOCATION is not defined."; \
+		exit 1; \
+	fi
+	@BUCKET_URL=gs://$(GCP_BUCKET_NAME); \
+	if ! gsutil ls $$BUCKET_URL 1>/dev/null 2>&1; then \
+		gsutil mb -p $(GCP_PROJECT) -l $(GCP_BUCKET_LOCATION) $$BUCKET_URL && \
+		echo "Bucket $(GCP_BUCKET_NAME) created successfully."; \
+	else \
+		echo "Bucket $(GCP_BUCKET_NAME) already exists."; \
+	fi && \
+	gsutil iam ch allUsers:objectViewer $$BUCKET_URL
+
 
 e2e-install: e2e/node_modules ## Install Cypress E2E testing tools
 	$(E2E_RUN) npm install
@@ -139,6 +189,6 @@ help:
 	@echo
 	@echo 'where <command> is one of the following:'
 	@echo
-	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help
