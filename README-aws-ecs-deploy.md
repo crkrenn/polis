@@ -1,6 +1,7 @@
 # Test: local docker
 
 # Dev-cloud
+* 23/08/27: new dev-cloud.env works with `make e2e-run` TEST and local
 * 23/08/27: new dev-cloud.env works with `make e2e-run`
 * add .env link in Makefile; edit values
 * cy create user wait for creating user to appear and disappear
