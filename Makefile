@@ -47,7 +47,7 @@ TEST: ## Run in test mode (e.g. `make TEST start`, etc.)
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
 .PHONY: DEV-CLOUD
-DEV-CLOUD: ## Run in test mode (e.g. `make TEST start`, etc.)
+DEV-CLOUD: ## Run with DEV-CLOUD settings (e.g. `make DEV-CLOUD start`, etc.)
 	$(eval ENV_FILE = dev-cloud.env)
 	@cd math && \
 	/bin/rm -f .env && \
@@ -56,11 +56,14 @@ DEV-CLOUD: ## Run in test mode (e.g. `make TEST start`, etc.)
 	$(eval GCP_BUCKET_NAME = $(shell grep -e ^GCP_BUCKET_NAME ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_PROJECT = $(shell grep -e ^GCP_PROJECT ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_BUCKET_LOCATION = $(shell grep -e ^GCP_BUCKET_LOCATION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+	$(eval GCP_CLOUD_RUN_REGION = $(shell grep -e ^GCP_CLOUD_RUN_REGION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
 echo_vars:
 	@echo ENV_FILE=${ENV_FILE}
 	@echo TAG=${TAG}
+
+### (section break)
 
 pull: echo_vars ## Pull most recent Docker container builds (nightlies)
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull ${CONTAINER_LIST}
@@ -114,8 +117,7 @@ rm-single-image: ## Remove Docker image that matches REGEXP (e.g. make rm-single
 		| xargs docker rmi; \
 	fi
 
-hash: ## Show current short hash
-	@echo Git hash: ${GIT_HASH}
+### (section break)
 
 build: echo_vars ## [Re]Build all Docker containers
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build ${CONTAINER_LIST}
@@ -135,6 +137,8 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down ${CONTAINER_LIST}
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
+
+### (section break)
 
 cp-static-assets-docker-helper: # Deploy static assets locally
 	@echo "One polis-file-server container found. Copying files...";
@@ -184,53 +188,6 @@ serve-static-assets: ## Serve static assets
 upload-gcp-static-assets: create-gcp-bucket ## Upload static assets to GCP bucket
 	gsutil -m cp -r ${STATIC_FILES}/* gs://${GCP_BUCKET_NAME}/
 
-run-docker-server-locally: # Run dockerized server locally
-	@echo "Running dockerized server locally..."
-	@echo "To stop, press Ctrl+C"
-	@/bin/cp -f ${ENV_FILE} server/.env && \
-	cd server && \
-	docker build -t compdem/${SERVER_IMAGE_NAME}-local:${TAG} . && \
-	echo pwd: $$(pwd) && \
-	docker run -it --rm --env-file .env -p 80:5000 compdem/${SERVER_IMAGE_NAME}-local:${TAG}
-
-upload-gcp-docker-server: ## Upload dockerized server to google cloud
-	@if [ -z "$(GCP_PROJECT)" ]; then \
-		echo "Error: GCP_PROJECT is not defined."; \
-		exit 1; \
-	fi
-	$(eval TIMESTAMP = $(shell date +"%Y-%m-%d--%H-%M-%S%z"))
-	gcloud auth configure-docker
-	docker ${CLOUD_BUILD_COMMAND} ${CLOUD_BUILD_OPTIONS} -t compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} server
-	docker tag compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:${TIMESTAMP}
-	docker tag compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest
-	docker push gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:${TIMESTAMP}
-	docker push gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest
-
-list-gcp-docker-images: ## List docker images in google cloud
-	@if [ -z "$(GCP_PROJECT)" ]; then \
-		echo "Error: GCP_PROJECT is not defined."; \
-		exit 1; \
-	fi
-	@gcloud container images list-tags gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}
-	@echo to delete images, use:
-	@echo gcloud container images delete gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:TAG_NAME
-
-env-to-gcloud:
-	$(eval GCLOUD_ENV_VARS=$(shell python bin/load_env_to_gcloud.py ${ENV_FILE}))
-
-deploy-gcp-docker-server: env-to-gcloud ## Deploy latest dockerized server to google cloud
-	@if [ -z "$(GCP_PROJECT)" ]; then \
-		echo "Error: GCP_PROJECT is not defined."; \
-		exit 1; \
-	fi
-	@gcloud services enable run.googleapis.com
-	@gcloud run deploy ${SERVER_IMAGE_NAME} \
-		--image gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest \
-		--platform managed \
-		--region us-central1 \
-		--allow-unauthenticated \
-		--set-env-vars ${GCLOUD_ENV_VARS}
-
 create-gcp-bucket: # Create GCP bucket if it doesn't exist
 	@if [ -z "$(GCP_BUCKET_NAME)" ]; then \
 		echo "Error: GCP_BUCKET_NAME is not defined."; \
@@ -253,6 +210,56 @@ create-gcp-bucket: # Create GCP bucket if it doesn't exist
 	fi && \
 	gsutil iam ch allUsers:objectViewer $$BUCKET_URL
 
+### (section break)
+
+run-docker-server-locally: # Run dockerized server locally
+	@echo "Running dockerized server locally..."
+	@echo "To stop, press Ctrl+C"
+	${DOCKER_COMPOSE} -f docker-compose.server.yml --env-file ${ENV_FILE} up
+
+upload-gcp-docker-server: ## Build and upload dockerized server to google cloud
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	$(eval TIMESTAMP = $(shell date +"%Y-%m-%d--%H-%M-%S%z"))
+	gcloud auth configure-docker
+	docker ${CLOUD_BUILD_COMMAND} ${CLOUD_BUILD_OPTIONS} -t compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} server
+	docker tag compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:${TIMESTAMP}
+	docker tag compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest
+	docker push gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:${TIMESTAMP}
+	docker push gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest
+
+list-gcp-docker-images: ## List docker images in google cloud
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	@gcloud container images list-tags gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}
+	@echo to delete images, use:
+	@echo gcloud container images delete gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:TAG_NAME
+
+list-gcp-services: ## List cloud run services in google cloud
+	gcloud run services list --platform managed --region ${GCP_CLOUD_RUN_REGION}
+
+env-to-gcloud:
+	$(eval GCLOUD_ENV_VARS=$(shell python bin/load_env_to_gcloud.py ${ENV_FILE}))
+	@echo "GCLOUD_ENV_VARS=${GCLOUD_ENV_VARS}"
+
+deploy-gcp-docker-server: env-to-gcloud ## Deploy latest dockerized server to google cloud
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	@gcloud services enable run.googleapis.com
+	@gcloud run deploy ${SERVER_IMAGE_NAME} \
+		--image gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest \
+		--platform managed \
+		--region ${GCP_CLOUD_RUN_REGION} \
+		--allow-unauthenticated \
+		--set-env-vars ${GCLOUD_ENV_VARS}
+
+### (section break)
 
 e2e-install: e2e/node_modules ## Install Cypress E2E testing tools
 	$(E2E_RUN) npm install
@@ -266,8 +273,21 @@ e2e-run-all: ## Run E2E tests: all
 e2e-run-interactive: ## Run E2E tests interactively
 	$(E2E_RUN) npx cypress open
 
+### (section break)
+
+hash: ## Show current short hash
+	@echo Git hash: ${GIT_HASH}
+
 # Helpful CLI shortcuts
 rbs: start-rebuild
+
+all-help: ## Show extra make targets
+	@echo 'Usage: make <command>'
+	@echo
+	@echo 'where <command> is one of the following:'
+	@echo
+	@grep -E '^[a-z0-9A-Z_-]+:.*?# .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
+
 
 %:
 	@true
@@ -280,14 +300,8 @@ help:
 	@echo
 	@echo 'where <command> is one of the following:'
 	@echo
-	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$|###' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {if ($$0 ~ /###/) {print ""} else {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}}'
 
-all-help: ## Show extra make targets
-	@echo 'Usage: make <command>'
-	@echo
-	@echo 'where <command> is one of the following:'
-	@echo
-	@grep -E '^[a-z0-9A-Z_-]+:.*?# .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 
 .DEFAULT_GOAL := help

@@ -21,8 +21,10 @@ RUN apk add --no-cache --virtual .build \
 
 COPY package*.json ./
 
+# default port for polis-server
 EXPOSE 5000
-
+# required for google cloud run
+EXPOSE 8080
 
 # Define the development build
 
