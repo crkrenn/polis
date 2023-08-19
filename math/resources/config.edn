@@ -14,8 +14,9 @@
  :export {:expiry-days 10}
 
  ;; TODO This poller config hasn't been hooked up yet... ghost
- :poller {:votes {:polling-interval 2000}
-          :moderation {:polling-interval 5000}}
+ :poller {:votes {:polling-interval #or [#long #env VOTE_POLLING_INTERVAL, 1000]}
+          :moderation {:polling-interval #or [#long #env MOD_POLLING_INTERVAL, 1000]}
+          :tasks {:polling-interval #or [#long #env TASK_POLLING_INTERVAL, 1000]}}}
 
  :math {:matrix-implementation :vectorz
         :cutoffs {:medium 100

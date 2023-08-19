@@ -8,12 +8,14 @@
             [polismath.components.postgres :as postgres]
             [taoensso.timbre :as log]))
 
+(defn delay-duration [last-timestamp current-timestamp min-interval max-interval]
+  (let [diff (/ (- current-timestamp last-timestamp) 2)]
+    (max min-interval (min diff max-interval))))
 
 (defn poll
   [{:as poller :keys [config conversation-manager postgres kill-chan]} message-type]
   (let [poller-config (-> config :poller)
         start-polling-from (- (System/currentTimeMillis) (* (:poll-from-days-ago poller-config) 1000 60 60 24))
-        polling-interval (or (-> poller-config (get message-type) :polling-interval) 1000)
         {:keys [zid-blocklist zid-allowlist]} poller-config
         [poll-function timestamp-key]
         (get {:votes [postgres/poll :created]
@@ -24,7 +26,9 @@
         (log/info "Polling" message-type ">" last-timestamp)
         (let [results (poll-function postgres last-timestamp)
               grouped-batches (group-by :zid results)
-              last-timestamp (apply max 0 last-timestamp (map timestamp-key results))]
+              current-timestamp (System/currentTimeMillis)
+              last-timestamp (apply max 0 last-timestamp (map timestamp-key results))
+              delay (delay-duration last-timestamp current-timestamp 1000 60000)]
           ; For each chunk of votes, for each conversation, send to the appropriate spout
           (doseq [[zid batch] grouped-batches]
             (when (cond zid-allowlist (get zid-allowlist zid)
@@ -33,10 +37,9 @@
               ;; TODO; need to sort out how we're using blocking vs non-blocking ops for threadability
               (conv-man/queue-message-batch! conversation-manager message-type zid batch)))
           ; Update timestamp
-          (<! (async/timeout polling-interval))
+          (log/info "Polling interval" delay)
+          (<! (async/timeout delay))
           (recur last-timestamp))))))
-
-
 
 (defrecord Poller [message-type config postgres conversation-manager kill-chan]
   component/Lifecycle

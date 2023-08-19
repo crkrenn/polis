@@ -4,19 +4,26 @@
 # make TEST start; make TEST stop
 # update TAG
 
-SHELL=/bin/bash
-E2E_RUN = cd e2e;
-STATIC_FILES = static_files
+export SHELL = /bin/bash
+export E2E_RUN = cd e2e;
+export STATIC_FILES = static_files
+export SERVER_IMAGE_NAME = polis-server
+export CLOUD_BUILD_COMMAND = buildx build
+export CLOUD_BUILD_OPTIONS = --platform linux/amd64
 
 export ENV_FILE = .env
 export TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,""); print $$2}')
 export GIT_HASH = $(shell git rev-parse --short HEAD)
 export COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.dev.yml
-export CONTAINER_LIST = ""
+# export CONTAINER_LIST =
 export DOCKER_COMPOSE = docker compose
 
 USE_DOCKER-COMPOSE: # use docker-compose
 	$(eval DOCKER_COMPOSE = docker-compose)
+
+SERVER_ONLY: # start server and nginx containers only
+	$(eval CONTAINER_LIST = server nginx-proxy)
+	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
 
 MATH_ONLY: # start math container only
 	$(eval CONTAINER_LIST = math)
@@ -176,6 +183,53 @@ serve-static-assets: ## Serve static assets
 
 upload-gcp-static-assets: create-gcp-bucket ## Upload static assets to GCP bucket
 	gsutil -m cp -r ${STATIC_FILES}/* gs://${GCP_BUCKET_NAME}/
+
+run-docker-server-locally: # Run dockerized server locally
+	@echo "Running dockerized server locally..."
+	@echo "To stop, press Ctrl+C"
+	@/bin/cp -f ${ENV_FILE} server/.env && \
+	cd server && \
+	docker build -t compdem/${SERVER_IMAGE_NAME}-local:${TAG} . && \
+	echo pwd: $$(pwd) && \
+	docker run -it --rm --env-file .env -p 80:5000 compdem/${SERVER_IMAGE_NAME}-local:${TAG}
+
+upload-gcp-docker-server: ## Upload dockerized server to google cloud
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	$(eval TIMESTAMP = $(shell date +"%Y-%m-%d--%H-%M-%S%z"))
+	gcloud auth configure-docker
+	docker ${CLOUD_BUILD_COMMAND} ${CLOUD_BUILD_OPTIONS} -t compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} server
+	docker tag compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:${TIMESTAMP}
+	docker tag compdem/${SERVER_IMAGE_NAME}-amd64:${TAG} gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest
+	docker push gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:${TIMESTAMP}
+	docker push gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest
+
+list-gcp-docker-images: ## List docker images in google cloud
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	@gcloud container images list-tags gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}
+	@echo to delete images, use:
+	@echo gcloud container images delete gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:TAG_NAME
+
+env-to-gcloud:
+	$(eval GCLOUD_ENV_VARS=$(shell python bin/load_env_to_gcloud.py ${ENV_FILE}))
+
+deploy-gcp-docker-server: env-to-gcloud ## Deploy latest dockerized server to google cloud
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	@gcloud services enable run.googleapis.com
+	@gcloud run deploy ${SERVER_IMAGE_NAME} \
+		--image gcr.io/${GCP_PROJECT}/${SERVER_IMAGE_NAME}:latest \
+		--platform managed \
+		--region us-central1 \
+		--allow-unauthenticated \
+		--set-env-vars ${GCLOUD_ENV_VARS}
 
 create-gcp-bucket: # Create GCP bucket if it doesn't exist
 	@if [ -z "$(GCP_BUCKET_NAME)" ]; then \
