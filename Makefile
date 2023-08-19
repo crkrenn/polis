@@ -4,6 +4,8 @@
 # make TEST start; make TEST stop
 # update TAG
 
+# CYPRESS_BASE_URL=
+
 export SHELL = /bin/bash
 export E2E_RUN = cd e2e;
 export STATIC_FILES = static_files
@@ -140,7 +142,7 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 
 ### (section break)
 
-cp-static-assets-docker-helper: # Deploy static assets locally
+cp-static-assets-docker-helper: 
 	@echo "One polis-file-server container found. Copying files...";
 	@if [ -z "${STATIC_FILES}" ]; then \
 		echo "Error: STATIC_FILES is not defined."; \
@@ -286,8 +288,7 @@ all-help: ## Show extra make targets
 	@echo
 	@echo 'where <command> is one of the following:'
 	@echo
-	@grep -E '^[a-z0-9A-Z_-]+:.*?# .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
-
+	@grep -E '^[a-z0-9A-Z_-]+:.*?##? .*$$|###' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?##? "}; {if ($$0 ~ /###/) {print ""} else {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}}'
 
 %:
 	@true

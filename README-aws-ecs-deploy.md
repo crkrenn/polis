@@ -1,6 +1,11 @@
 # Test: local docker
 
 # Dev-cloud
+* TTD: pull request for gcp
+* TTD: merge quit for now
+* TTD: merge math docs
+* write database backup
+* test embedding
 * test email, other keys
 * Run server locally
 * Run server in cloud
