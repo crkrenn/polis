@@ -61,11 +61,22 @@ DEV-CLOUD: ## Run with DEV-CLOUD settings (e.g. `make DEV-CLOUD start`, etc.)
 	$(eval GCP_CLOUD_RUN_REGION = $(shell grep -e ^GCP_CLOUD_RUN_REGION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
+### (section break)
+
+export-conversation: ## Export conversation with a given ZID (e.g. make export-conversation ZID=12)
+	@if [ "$(ZID)" = "" ]; then \
+		echo "ZID is not defined"; \
+		echo "Please use: make export-conversation ZID=12, etc."; \
+		exit 1; \
+	fi
+	@${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} run math \
+		clojure -M:run export -z ${ZID} -f conversation-${ZID}-export.zip
+
+### (section break)
+
 echo_vars:
 	@echo ENV_FILE=${ENV_FILE}
 	@echo TAG=${TAG}
-
-### (section break)
 
 pull: echo_vars ## Pull most recent Docker container builds (nightlies)
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull ${CONTAINER_LIST}
@@ -142,7 +153,7 @@ start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker conta
 
 ### (section break)
 
-cp-static-assets-docker-helper: 
+cp-static-assets-docker-helper:
 	@echo "One polis-file-server container found. Copying files...";
 	@if [ -z "${STATIC_FILES}" ]; then \
 		echo "Error: STATIC_FILES is not defined."; \
