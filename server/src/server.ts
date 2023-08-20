@@ -1133,7 +1133,6 @@ function initializePolisHelpers() {
     "preprod.pol.is": "preprod.pol.is",
   };
   function hasWhitelistMatches(host: string) {
-    logger.debug("hasWhitelistMatches", host);
     let hostWithoutProtocol = host;
     if (host.startsWith("http://")) {
       hostWithoutProtocol = host.slice(7);
@@ -5334,9 +5333,6 @@ Email verified! You can close this tab or hit the back button.
     res: { send: (arg0: number, arg1: string) => void },
     next: (arg0?: string) => void
   ) {
-    logger.debug("denyIfNotFromWhitelistedDomain");
-    logger.debug("denyIfNotFromWhitelistedDomain", req.headers);
-    logger.debug("denyIfNotFromWhitelistedDomain", req.p);
     let isWithinIframe =
       req.headers &&
       req.headers.referrer &&

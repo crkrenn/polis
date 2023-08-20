@@ -29,6 +29,7 @@
     "d3-force": "~1.2.1",
     "d3-tip": "~0.6.8",
     "deepcopy": "~0.4.0",
+    "dependency-cruiser": "^13.1.2",
     "event-hooks-webpack-plugin": "~2.2.0",
     "file-loader": "~6.2.0",
     "font-awesome": "~4.7.0",
