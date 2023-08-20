@@ -63,14 +63,16 @@ DEV-CLOUD: ## Run with DEV-CLOUD settings (e.g. `make DEV-CLOUD start`, etc.)
 
 ### (section break)
 
-export-conversation: ## Export conversation with a given ZID (e.g. make export-conversation ZID=12)
-	@if [ "$(ZID)" = "" ]; then \
-		echo "ZID is not defined"; \
-		echo "Please use: make export-conversation ZID=12, etc."; \
-		exit 1; \
-	fi
-	@${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} run math \
-		clojure -M:run export -z ${ZID} -f conversation-${ZID}-export.zip
+export-conversation: ## Summary of commands to export conversation with a given ZID
+	@echo "To export a conversation, use:"
+	@echo "* start the math container"
+	@echo "* run the export command in the container "
+	@echo "  (replace 7yxwebu2mb with the ZID of the conversation you want to export)"
+	@echo "  * clj -M:run export -Z 7yxwebu2mb -f export-7yxwebu2mb.zip"
+	@echo "* find the container ID"
+	@echo "  * docker ps"
+	@echo "* copy the export file to the host"
+	@echo "  * docker cp <container ID>:/app/export-7yxwebu2mb.zip ."
 
 ### (section break)
 

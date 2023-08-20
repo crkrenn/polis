@@ -2,7 +2,6 @@
 
 # Dev-cloud
 * TTD: build in debug; add democracygps to white list
-* TTD: export conversation
 * TTD: pull request for gcp
 * TTD: merge quit for now
 * TTD: merge math docs
