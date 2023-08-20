@@ -1,19 +1,13 @@
 # Test: local docker
 
 # Dev-cloud
-* try to disable poll creation for is_owner or site_owner = false
-* TTD: build in debug; add democracygps to white list
-* TTD: pull request for gcp
-* TTD: merge quit for now
-* TTD: merge math docs
 * write database backup
-* test embedding
-* test email, other keys
-* Run server locally
-* Run server in cloud
-* Run math in cloud
+* start assembling comments
+
+# someday
+* try to disable poll creation for is_owner or site_owner = false
+* TTD: pull request for gcp deployment
 * Update math so that polling intervals can be controlled by config variables
-* try docker-compose with server.
 
 # Prod-cloud
 
