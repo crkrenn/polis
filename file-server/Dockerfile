@@ -45,7 +45,7 @@ RUN npm ci --production=false
 
 COPY client-participation/. .
 
-RUN npm run build:dev
+RUN npm run build:prod
 
 
 

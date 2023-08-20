@@ -11,6 +11,15 @@ var basePath = "";
 var pid = "unknownpid";
 
 function polisAjax(api, data, type, headers) {
+  console.log("polisAjax");
+  console.log("api");
+  console.log(api);
+  console.log("data");
+  console.log(data);
+  console.log("type");
+  console.log(type);
+  console.log("headers");
+  console.log(headers);
   if (!_.isString(api)) {
     throw "api param should be a string";
   }

@@ -1,0 +1,47 @@
+# Before running docker compose up for the first time,
+# first copy the env.example file to .env and fill in the values.
+# `cp env.example .env`
+# (edit values as needed)
+#
+# Then, build and run with:
+# `docker compose build`
+# `docker compose up`
+#
+# Subsequently you should only need to run:
+# `docker compose up`
+#
+# Force a full re-build with no cache from previous builds:
+# `docker compose build --no-cache`
+# `docker compose up`
+#
+# If you only changed the .env file, you can do a quick rebuild:
+# `docker compose up --force-recreate`
+#
+# To stop, press CTRL+C (if not running in --detach mode), or run:
+# `docker compose down`
+
+services:
+  server:
+    env_file:
+      - ${SERVER_ENV_FILE:-.env}
+    image: docker.io/compdem/polis-server:${TAG:-dev}
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        NODE_ENV: production
+      labels:
+        polis_tag: ${TAG:-dev}
+    # Scale the server container to a given number of instances.
+    scale: 1
+    volumes:
+    # Persist logs to a volume, so they can be accessed after the container is stopped.
+      - server-logs:/app/logs
+    ports:
+      - 5000:5000
+
+volumes:
+  server-logs:
+    labels:
+      polis_tag: ${TAG:-dev}

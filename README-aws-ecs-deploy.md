@@ -1,6 +1,7 @@
 # Test: local docker
 
 # Dev-cloud
+* try to disable poll creation for is_owner or site_owner = false
 * TTD: build in debug; add democracygps to white list
 * TTD: pull request for gcp
 * TTD: merge quit for now

@@ -123,34 +123,6 @@ rm-single-image: ## Remove Docker image that matches REGEXP (e.g. make rm-single
 rm-ALL: rm-containers rm-volumes rm-images ## Remove Docker containers, volumes, and images where (polis_tag="${TAG}")
 	@echo Done.
 
-rm-single-image: ## Remove Docker image that matches REGEXP (e.g. make rm-single-image REGEXP='file-server.*test')
-	@if [ "$(REGEXP)" = "" ]; then \
-		echo "REGEXP is not defined"; \
-		echo "Please use: make rm-single-image REGEXP='file-server.*test'"; \
-		exit 1; \
-	fi
-	@MATCH_COUNT=$$(docker images | grep -E "$(REGEXP)" | wc -l); \
-	if [ "$$MATCH_COUNT" -gt 1 ]; then \
-		echo "Error: REGEXP matches more than one image"; \
-		exit 1; \
-	elif [ "$$MATCH_COUNT" -eq 0 ]; then \
-		echo "No matching images found."; \
-		exit 0; \
-	else \
-		echo "REGEXP: $(REGEXP)"; \
-		docker-compose down; \
-		docker images \
-		| grep -E "$(REGEXP)" \
-		| awk '{print $$3}' \
-		| xargs docker rmi 2>&1 \
-		| awk '{print $$NF}' \
-		| xargs docker rm; \
-		docker images \
-		| grep -E "$(REGEXP)" \
-		| awk '{print $$3}' \
-		| xargs docker rmi; \
-	fi
-
 ### (section break)
 
 build: echo_vars ## [Re]Build all Docker containers
