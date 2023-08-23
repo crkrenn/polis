@@ -3,7 +3,7 @@
 # Dev-cloud
 * write database backup
 * start assembling comments
-
+* pg_dump on aws
 # someday
 * try to disable poll creation for is_owner or site_owner = false
 * TTD: pull request for gcp deployment

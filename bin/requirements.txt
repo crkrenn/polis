@@ -2,3 +2,5 @@ googletrans
 diskcache
 google-cloud-translate
 wheel
+selenium
+python-dotenv
