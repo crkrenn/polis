@@ -59,7 +59,7 @@ DEV-CLOUD: ## Run with DEV-CLOUD settings (e.g. `make DEV-CLOUD start`, etc.)
 	$(eval GCP_PROJECT = $(shell grep -e ^GCP_PROJECT ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_BUCKET_LOCATION = $(shell grep -e ^GCP_BUCKET_LOCATION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_CLOUD_RUN_REGION = $(shell grep -e ^GCP_CLOUD_RUN_REGION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
-	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
+	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml )
 
 ### (section break)
 

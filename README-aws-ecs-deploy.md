@@ -1,6 +1,8 @@
 # Test: local docker
 
 # Dev-cloud
+* deploy in prod mode
+* disable add user
 * write database backup
 * start assembling comments
 * pg_dump on aws
