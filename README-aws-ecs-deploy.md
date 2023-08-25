@@ -1,8 +1,13 @@
 # Test: local docker
 
 # Dev-cloud
+* make new dgps-tools repo
+* make word cloud
+* remove polis logo/privacy/TOS
+* add photo
 * deploy in prod mode
-* disable add user
+* github issue test email in production (interception?)
+* github issue images
 * write database backup
 * start assembling comments
 * pg_dump on aws

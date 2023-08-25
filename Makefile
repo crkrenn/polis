@@ -35,6 +35,10 @@ ALL_BUT_MATH: # start all containers except math
 	$(eval CONTAINER_LIST = server postgres file-server nginx-proxy)
 	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
 
+E2E_NON_LOCAL: # test e2e in non-local mode
+	$(eval E2E_RUN = cd e2e; CYPRESS_BASE_URL=https://${API_HOSTNAME} )
+	@echo "E2E_RUN=${E2E_RUN}"
+
 PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
 	$(eval ENV_FILE = prod.env)
 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
@@ -59,6 +63,7 @@ DEV-CLOUD: ## Run with DEV-CLOUD settings (e.g. `make DEV-CLOUD start`, etc.)
 	$(eval GCP_PROJECT = $(shell grep -e ^GCP_PROJECT ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_BUCKET_LOCATION = $(shell grep -e ^GCP_BUCKET_LOCATION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval GCP_CLOUD_RUN_REGION = $(shell grep -e ^GCP_CLOUD_RUN_REGION ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+	$(eval API_HOSTNAME = $(shell grep -e ^API_HOSTNAME ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml )
 
 ### (section break)
@@ -130,6 +135,21 @@ build: echo_vars ## [Re]Build all Docker containers
 
 build-no-cache: echo_vars ## Build all Docker containers without cache
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache ${CONTAINER_LIST}
+
+build-cloud-function: # Remove cloud function FUNCTION (e.g. make build-cloud-function FUNCTION='backup_postgres')
+	$(eval TIMESTAMP = $(shell date +"%Y-%m-%d--%H-%M-%S%z"))
+	@if [ -z "$(GCP_PROJECT)" ]; then \
+		echo "Error: GCP_PROJECT is not defined."; \
+		exit 1; \
+	fi
+	@if [ -z "$(FUNCTION)" ]; then \
+		echo "FUNCTION is not defined"; \
+		echo "Please use: make build-cloud-function FUNCTION='backup_postgres'"; \
+	else \
+		cd cloud_functions && \
+		cd "$(FUNCTION)" && \
+		echo gcloud builds submit --tag gcr.io/$(GCP_PROJECT)/$(FUNCTION):$(TIMESTAMP);  \
+	fi
 
 start-recreate: echo_vars ## Start all Docker containers with recreated environments
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --force-recreate ${CONTAINER_LIST}
