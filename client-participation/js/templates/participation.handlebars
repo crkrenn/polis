@@ -24,9 +24,9 @@
     background-color: {{polis_bgcolor}};
   "> {{! PARTICIPATION VIEW DIV }}
 
-  {{#if useBannerHeader}}
+  {{!-- {{#if useBannerHeader}}
     {{> headerWhatIsPolis}}
-  {{/if}}
+  {{/if}} --}}
 <div
   class="clickDoesNotDeselectHull"
   style="display: none"
@@ -44,6 +44,7 @@
     padding-inline-end: 0px
     ">
     <div class="POLIS_HEADLINE conversationViewHeadline" dir="auto">
+{{!--
     {{#unless useBannerHeader}}
       {{#if showLogoAndBreadCrumbInHeader}}
           <div class="HeadingA">
@@ -74,7 +75,7 @@
           </div>
         {{/if}}
       {{/if}}
-    {{/unless}}
+    {{/unless}} --}}
 
     {{#if show_admin_button}}
     <div style="padding: 10px 0px 20px 0px">
@@ -436,7 +437,8 @@
 
 {{!  ------------ BEGIN FOOTER ---------------  }}
 {{#unless no_footer}}
-
+{{!-- Original Pol.is footer: --}}
+{{!--
   <div style="margin-top: 40px; margin-bottom: 20px;" data-test-footer>
     <a href="https://pol.is" target="_blank" dir="auto">
       {{> logo}}
@@ -449,6 +451,30 @@
       >
         {{> linkPrivacy}}
         {{> linkTos}}
+    </div>
+  </div> --}}
+
+{{!-- begin new footer --}}
+<div style="margin-top: 40px; margin-bottom: 20px;" data-test-footer>
+    <br />
+    The
+    <a href="https://github.com/crkrenn/polis/tree/dgps-edge" target="_blank" rel="noopener noreferrer">
+        software supporting this conversation
+    </a>
+    is
+    <a href="https://pol.is/home" target="_blank" rel="noopener noreferrer">Polis</a>. For more information, please see our
+    <a href="https://democracygps.org/faqs" target="_blank" rel="noopener noreferrer">frequently asked questions</a>,
+    our
+    <a href="https://democracygps.org/terms-and-conditions" target="_blank" rel="noopener noreferrer">terms &amp; conditions</a>,
+    our
+    <a href="https://democracygps.org/privacy-policy" target="_blank" rel="noopener noreferrer">privacy policy</a>,
+    or feel free to
+    <a href="https://democracygps.org/contact" target="_blank" rel="noopener noreferrer">contact us</a>!
+</div>
+{{!-- end new footer --}}
+
+
+
     </div>
   </div>
 

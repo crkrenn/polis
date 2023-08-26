@@ -31,6 +31,10 @@ MATH_ONLY: # start math container only
 	$(eval CONTAINER_LIST = math)
 	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
 
+FILE_SERVER_ONLY: # start math container only
+	$(eval CONTAINER_LIST = file-server)
+	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
+
 ALL_BUT_MATH: # start all containers except math
 	$(eval CONTAINER_LIST = server postgres file-server nginx-proxy)
 	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
@@ -112,14 +116,23 @@ rm-single-image: ## Remove Docker image that matches REGEXP (e.g. make rm-single
 		echo "Please use: make rm-single-image REGEXP='file-server.*test'"; \
 	else \
 		echo "REGEXP: $(REGEXP)"; \
-		docker-compose down; \
+		echo "Image match:"; \
 		docker images \
+		| grep -E "$(REGEXP)"; \
+		echo "Container match:"; \
+		docker images \
+		| grep -E "$(REGEXP)" \
+		| awk '{print $$3}'; \
+	fi
+
+foo:
+		echo docker images \
 		| grep -E "$(REGEXP)" \
 		| awk '{print $$3}' \
 		| xargs docker rmi 2>&1 \
 		| awk '{print $$NF}' \
 		| xargs docker rm; \
-		docker images \
+		echo docker images \
 		| grep -E "$(REGEXP)" \
 		| awk '{print $$3}' \
 		| xargs docker rmi; \
@@ -155,6 +168,10 @@ start-recreate: echo_vars ## Start all Docker containers with recreated environm
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --force-recreate ${CONTAINER_LIST}
 
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
+
+start-rebuild-nocache: echo_vars ## Start all Docker containers, [re]building as needed
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache ${CONTAINER_LIST}
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
 
 start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")

@@ -1,16 +1,15 @@
 # Test: local docker
 
 # Dev-cloud
-* remove polis logo/privacy/TOS
-* make prod-cloud
 * test url in moderation message
 
-* deploy in prod mode
-* github issue test email in production (interception?)
-* github issue images
-* write database backup
 * start assembling comments
-* pg_dump on aws
+# soon
+* fix spacing issue with POLIS_FROM_ADDRESS="crkrenn@democracygps.org" (can't include name)
+* write database backup
+* github issue test email in production (interception?)
+* merge request to replace markdown with marked (better support for tables and images)
+
 # someday
 * try to disable poll creation for is_owner or site_owner = false
 * TTD: pull request for gcp deployment
