@@ -39,7 +39,7 @@ ALL_BUT_MATH: # start all containers except math
 	$(eval CONTAINER_LIST = server postgres file-server nginx-proxy)
 	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
 
-E2E_NON_LOCAL: # test e2e in non-local mode
+E2E_NON_LOCAL: # test e2e in non-local mode (use production server API_HOSTNAME)
 	$(eval E2E_RUN = cd e2e; CYPRESS_BASE_URL=https://${API_HOSTNAME} )
 	@echo "E2E_RUN=${E2E_RUN}"
 

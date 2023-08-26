@@ -1,10 +1,14 @@
 # Test: local docker
 
 # Dev-cloud
-* start math server
-* run e2e tests
-* test url in moderation message
-
+* Trim all statements to 140 characters.
+* (or update client-participation % grep -e 140 js/util/constants.js
+  CHARACTER_LIMIT: 140, // we can import tweets, so 140)
+* add FAQ for Polis (what is Polis)
+* Write blog post.
+* Respond to fewer statements with time.
+* add "you do not need to respond to all statement. Please click "quit for now" when you are finished so that you can subscribe to updates.
+* Update text on subscription.
 * start assembling comments
 # soon
 * fix spacing issue with POLIS_FROM_ADDRESS="crkrenn@democracygps.org" (can't include name)
