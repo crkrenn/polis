@@ -6842,9 +6842,11 @@ Email verified! You can close this tab or hit the back button.
         logger.error("polis_err_sending_email", err);
       });
   }
-
+// getServerUrl
   function createProdModerationUrl(zinvite: string) {
-    return "https://pol.is/m/" + zinvite;
+    let server = Config.getServerUrl();
+    let url = server + "/m/" + zinvite;
+    return url;
   }
 
   function createModerationUrl(

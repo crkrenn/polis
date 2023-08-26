@@ -1,10 +1,10 @@
 # Test: local docker
 
 # Dev-cloud
-* make new dgps-tools repo
-* make word cloud
 * remove polis logo/privacy/TOS
-* add photo
+* make prod-cloud
+* test url in moderation message
+
 * deploy in prod mode
 * github issue test email in production (interception?)
 * github issue images
