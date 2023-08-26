@@ -1,6 +1,8 @@
 # Test: local docker
 
 # Dev-cloud
+* start math server
+* run e2e tests
 * test url in moderation message
 
 * start assembling comments
