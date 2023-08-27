@@ -1,9 +1,7 @@
 # Test: local docker
 
 # Dev-cloud
-* Trim all statements to 140 characters.
-* (or update client-participation % grep -e 140 js/util/constants.js
-  CHARACTER_LIMIT: 140, // we can import tweets, so 140)
+* Add statements that are over 140 char; Remove statements that were clipped. 
 * add FAQ for Polis (what is Polis)
 * Write blog post.
 * Respond to fewer statements with time.

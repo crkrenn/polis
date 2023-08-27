@@ -44,7 +44,7 @@ function polisAjax(api, data, type, headers) {
   }, headers);
 
 
-  var promise;
+  // var promise;
   var config = {
     url: url,
     contentType: "application/json; charset=utf-8",
@@ -55,46 +55,45 @@ function polisAjax(api, data, type, headers) {
     // crossDomain: true,
     dataType: "json"
   };
-  if ("GET" === type) {
-    promise = $.ajax($.extend(config, {
-      type: "GET",
-      data: data
-    }));
-  } else if ("POST" === type) {
-    promise = $.ajax($.extend(config, {
-      type: "POST",
-      data: JSON.stringify(data)
-    }));
-  } else if ("PUT" === type) {
-    promise = $.ajax($.extend(config, {
-      type: "PUT",
-      data: JSON.stringify(data)
-    }));
-  }
 
-  promise.then(function() {
-    var latestPid = Utils.getCookie("pid");
-    if (pid !== latestPid) {
-      pid = latestPid;
-      eb.trigger(eb.pidChange, latestPid);
+  const maxRetries = 3; // Maximum number of retries
+  const retryDelays = [1000, 2000, 4000]; // Delays in milliseconds for each retry
+
+  function _attempt(retryCount) {
+    var promise;
+    if ("GET" === type) {
+      promise = $.ajax($.extend(config, {
+        type: "GET",
+        data: data
+      }));
+    } else if ("POST" === type) {
+      promise = $.ajax($.extend(config, {
+        type: "POST",
+        data: JSON.stringify(data)
+      }));
+    } else if ("PUT" === type) {
+      promise = $.ajax($.extend(config, {
+        type: "PUT",
+        data: JSON.stringify(data)
+      }));
     }
-  });
 
-  promise.fail(function(jqXHR, message, errorType) {
+    promise.then(function() {
+      var latestPid = Utils.getCookie("pid");
+      if (pid !== latestPid) {
+        pid = latestPid;
+        eb.trigger(eb.pidChange, latestPid);
+      }
+    });
 
     // sendEvent("Error", api, jqXHR.status);
 
-    // logger.error("SEND ERROR");
-    console.dir(arguments);
-    if (403 === jqXHR.status) {
-      eb.trigger(eb.authNeeded);
-    }
-    //logger.dir(data);
-    //logger.dir(message);
-    //logger.dir(errorType);
-  });
-  return promise;
+    return promise;
+  }
+
+  return _attempt(0);  // Start with the first attempt
 }
+
 
 function polisPost(api, data, headers) {
   return polisAjax(api, data, "POST", headers);
