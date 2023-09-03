@@ -85,7 +85,7 @@ s.commentTooLongByChars = "Statement length limit exceeded by {{CHARACTERS_COUNT
 s.notSentSinceDemo = "(not really, this is a demo)";
 s.submitComment = "Submit";
 s.tipStarred = "Marked as important.";
-s.participantHelpWelcomeText = "Welcome to a new kind of conversation - <em>vote</em> on other people's statements.";
+s.participantHelpWelcomeText = "Welcome to a new kind of conversation - <em>vote</em> on other people's statements. You do not need to vote on all statements. And, please click 'Quit for now' if you want to leave the conversation so we can securely collect your email address, contact you if we need more help finding agreement, and share what agreement we do find. Thanks!";
 s.participantHelpGroupsText = "People who vote similarly <span style='font-weight: 700;'>are grouped.</span> Click a group to see which viewpoints they share. <a style='font-weight: 700; cursor: pointer; text-decoration: underline' id='helpTextGroupsExpand'>...more</a>";
 s.participantHelpGroupsNotYetText = "The visualization will appear once 7 participants have begun voting";
 s.helpWhatAreGroupsDetail = "<p>You've probably seen 'recommended products' on Amazon, or 'recommended movies' on Netflix. Each of those services uses statistics to group the user with people who buy and watch similar things, then show them things that those people bought or watched.</p> <p> When a user votes on statements, they are grouped with people who voted like they did! You can see those groups below. Each is made up of people who have similar opinions. There are fascinating insights to discover in each conversation. Go ahead - click a group to see what brought them together and what makes them unique! </p>";

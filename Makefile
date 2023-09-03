@@ -19,6 +19,11 @@ export GIT_HASH = $(shell git rev-parse --short HEAD)
 export COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.dev.yml
 # export CONTAINER_LIST =
 export DOCKER_COMPOSE = docker compose
+export DETACH_OPTION =
+
+DETACHED: # use docker-compose
+	$(eval DETACH_OPTION = -d)
+	@echo "DETACH_OPTION=${DETACH_OPTION}"
 
 USE_DOCKER-COMPOSE: # use docker-compose
 	$(eval DOCKER_COMPOSE = docker-compose)
@@ -93,7 +98,7 @@ pull: echo_vars ## Pull most recent Docker container builds (nightlies)
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull ${CONTAINER_LIST}
 
 start: echo_vars ## Start all Docker containers
-	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${CONTAINER_LIST}
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION} ${CONTAINER_LIST}
 
 stop: echo_vars ## Stop all Docker containers
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down ${CONTAINER_LIST}
@@ -165,21 +170,21 @@ build-cloud-function: # Remove cloud function FUNCTION (e.g. make build-cloud-fu
 	fi
 
 start-recreate: echo_vars ## Start all Docker containers with recreated environments
-	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --force-recreate ${CONTAINER_LIST}
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION} --force-recreate ${CONTAINER_LIST}
 
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
-	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION} --build ${CONTAINER_LIST}
 
 start-rebuild-nocache: echo_vars ## Start all Docker containers, [re]building as needed
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache ${CONTAINER_LIST}
-	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION} --build ${CONTAINER_LIST}
 
 start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache ${CONTAINER_LIST}
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down ${CONTAINER_LIST}
-	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION} --build ${CONTAINER_LIST}
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down ${CONTAINER_LIST}
-	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build ${CONTAINER_LIST}
+	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION} --build ${CONTAINER_LIST}
 
 ### (section break)
 
@@ -213,6 +218,13 @@ gunzip-nonsuffix-files:
 			gunzip -c "$$file" > "$$file.unzipped" && mv "$$file.unzipped" "$$file"; \
 		fi \
 	done
+
+rebuild-and-upload-gcp-static-assets: ## Rebuild and upload DEV-CLOUD static assets to GCP bucket
+	make DEV-CLOUD FILE_SERVER_ONLY build-no-cache && \
+	make DETACHED DEV-CLOUD ALL_BUT_MATH start && \
+	make DEV-CLOUD cp-static-assets-docker && \
+	make DEV-CLOUD upload-gcp-static-assets && \
+	make DEV-CLOUD stop
 
 cp-static-assets-docker: ## Copy static assets from polis-file-server container to STATIC_FILES directory
 	$(eval CONTAINER_COUNT=$(shell docker ps | grep 'polis-file-server' | wc -l))
@@ -258,7 +270,7 @@ create-gcp-bucket: # Create GCP bucket if it doesn't exist
 run-docker-server-locally: # Run dockerized server locally
 	@echo "Running dockerized server locally..."
 	@echo "To stop, press Ctrl+C"
-	${DOCKER_COMPOSE} -f docker-compose.server.yml --env-file ${ENV_FILE} up
+	${DOCKER_COMPOSE} -f docker-compose.server.yml --env-file ${ENV_FILE} up ${DETACH_OPTION}
 
 upload-gcp-docker-server: ## Build and upload dockerized server to google cloud
 	@if [ -z "$(GCP_PROJECT)" ]; then \

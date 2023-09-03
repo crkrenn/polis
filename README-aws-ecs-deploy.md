@@ -1,7 +1,16 @@
 # Test: local docker
 
 # Dev-cloud
-* Add statements that are over 140 char; Remove statements that were clipped. 
+* Congress is not doing its job well.
+* Many issues not being addressed.
+* You can help by answering some questions now and, with our help, contacting Congress later.
+
+Assault weapons
+
+What issues do you think are important (examples).
+
+
+
 * add FAQ for Polis (what is Polis)
 * Write blog post.
 * Respond to fewer statements with time.
