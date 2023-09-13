@@ -21,11 +21,11 @@ export COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.dev.yml
 export DOCKER_COMPOSE = docker compose
 export DETACH_OPTION =
 
-DETACHED: # use docker-compose
+DETACHED: # run in detached mode
 	$(eval DETACH_OPTION = -d)
 	@echo "DETACH_OPTION=${DETACH_OPTION}"
 
-USE_DOCKER-COMPOSE: # use docker-compose
+USE_DOCKER-COMPOSE: # use older "docker-compose" instead of "docker compose"
 	$(eval DOCKER_COMPOSE = docker-compose)
 
 SERVER_ONLY: # start server and nginx containers only
@@ -36,7 +36,7 @@ MATH_ONLY: # start math container only
 	$(eval CONTAINER_LIST = math)
 	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
 
-FILE_SERVER_ONLY: # start math container only
+FILE_SERVER_ONLY: # start file server only
 	$(eval CONTAINER_LIST = file-server)
 	@echo "CONTAINER_LIST=${CONTAINER_LIST}"
 
@@ -130,19 +130,6 @@ rm-single-image: ## Remove Docker image that matches REGEXP (e.g. make rm-single
 		| awk '{print $$3}'; \
 	fi
 
-foo:
-		echo docker images \
-		| grep -E "$(REGEXP)" \
-		| awk '{print $$3}' \
-		| xargs docker rmi 2>&1 \
-		| awk '{print $$NF}' \
-		| xargs docker rm; \
-		echo docker images \
-		| grep -E "$(REGEXP)" \
-		| awk '{print $$3}' \
-		| xargs docker rmi; \
-	fi
-
 rm-ALL: rm-containers rm-volumes rm-images ## Remove Docker containers, volumes, and images where (polis_tag="${TAG}")
 	@echo Done.
 
@@ -154,20 +141,20 @@ build: echo_vars ## [Re]Build all Docker containers
 build-no-cache: echo_vars ## Build all Docker containers without cache
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache ${CONTAINER_LIST}
 
-build-cloud-function: # Remove cloud function FUNCTION (e.g. make build-cloud-function FUNCTION='backup_postgres')
-	$(eval TIMESTAMP = $(shell date +"%Y-%m-%d--%H-%M-%S%z"))
-	@if [ -z "$(GCP_PROJECT)" ]; then \
-		echo "Error: GCP_PROJECT is not defined."; \
-		exit 1; \
-	fi
-	@if [ -z "$(FUNCTION)" ]; then \
-		echo "FUNCTION is not defined"; \
-		echo "Please use: make build-cloud-function FUNCTION='backup_postgres'"; \
-	else \
-		cd cloud_functions && \
-		cd "$(FUNCTION)" && \
-		echo gcloud builds submit --tag gcr.io/$(GCP_PROJECT)/$(FUNCTION):$(TIMESTAMP);  \
-	fi
+# build-cloud-function: # Remove cloud function FUNCTION (e.g. make build-cloud-function FUNCTION='backup_postgres')
+# 	$(eval TIMESTAMP = $(shell date +"%Y-%m-%d--%H-%M-%S%z"))
+# 	@if [ -z "$(GCP_PROJECT)" ]; then \
+# 		echo "Error: GCP_PROJECT is not defined."; \
+# 		exit 1; \
+# 	fi
+# 	@if [ -z "$(FUNCTION)" ]; then \
+# 		echo "FUNCTION is not defined"; \
+# 		echo "Please use: make build-cloud-function FUNCTION='backup_postgres'"; \
+# 	else \
+# 		cd cloud_functions && \
+# 		cd "$(FUNCTION)" && \
+# 		echo gcloud builds submit --tag gcr.io/$(GCP_PROJECT)/$(FUNCTION):$(TIMESTAMP);  \
+# 	fi
 
 start-recreate: echo_vars ## Start all Docker containers with recreated environments
 	${DOCKER_COMPOSE} ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION} --force-recreate ${CONTAINER_LIST}
@@ -240,7 +227,7 @@ serve-static-assets: ## Serve static assets
 	cd ${STATIC_FILES} && \
 	python -m http.server 8080
 
-upload-gcp-static-assets: create-gcp-bucket ## Upload static assets to GCP bucket
+upload-gcp-static-assets: create-gcp-bucket # Upload static assets to GCP bucket
 	gsutil -m cp -r ${STATIC_FILES}/* gs://${GCP_BUCKET_NAME}/
 
 create-gcp-bucket: # Create GCP bucket if it doesn't exist
