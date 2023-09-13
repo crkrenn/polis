@@ -415,6 +415,7 @@ module.exports = Handlebones.ModelView.extend({
         preloadHelper.firstVotesByMePromise,
         preloadHelper.firstPtptPromise
       ).then(_.defer(function() {
+        window.parent.postMessage('polis-commentQueueIsEmpty', '*');
         var userHasVoted = !!votesByMe.size() ||
           (preload.firstVotesByMe && preload.firstVotesByMe.length) ||
           (preload.firstPtpt && preload.firstPtpt.vote_count > 0);
@@ -457,6 +458,7 @@ module.exports = Handlebones.ModelView.extend({
         preloadHelper.firstVotesByMePromise,
         preloadHelper.firstPtptPromise
       ).then(_.defer(function() {
+        window.parent.postMessage('polis-quitForNow-clicked', '*');
         waitingForComments = false;
         // pollForComments();
         var ucw = Utils.userCanWrite();
