@@ -1,4 +1,5 @@
 (function() {
+  console.log("embed.js loaded");
   var polis = window.polis = window.polis || {};
   var firstRun = !window.polis._hasRun;
   polis._hasRun = 1;
@@ -34,6 +35,7 @@
   var xid = paramsHash.xid || paramsQuery.xid;
 
   function getConfig(d) {
+    console.log('embed getConfig:', d);
      return {
          conversation_id: d.getAttribute("data-conversation_id"),
          site_id: d.getAttribute("data-site_id"),
@@ -88,6 +90,7 @@
 
 
   function createPolisIframe(parent, o) {
+    console.log("embed.js parent:", parent);
     var iframe = document.createElement("iframe");
     var path = [];
     o.parent_url = o.parent_url || window.location+"";
@@ -211,6 +214,7 @@
     // }
 
     window.addEventListener("message", function(event) {
+      console.log("embed.js got message", event);
       var data = event.data||{};
       var domain = event.origin.replace(/^https?:\/\//,'');
       if (!domain.match(/(^|\.)<%= embedServiceHostname %>$/)) {

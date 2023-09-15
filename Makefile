@@ -123,12 +123,40 @@ rm-single-image: ## Remove Docker image that matches REGEXP (e.g. make rm-single
 		echo "REGEXP: $(REGEXP)"; \
 		echo "Image match:"; \
 		docker images \
-		| grep -E "$(REGEXP)"; \
+			| grep -E "$(REGEXP)" \
+			| awk '{print $$3}'; \
 		echo "Container match:"; \
 		docker images \
-		| grep -E "$(REGEXP)" \
-		| awk '{print $$3}'; \
+			 | grep -E "$(REGEXP)" \
+			 | awk '{print $$3}' \
+			 | xargs docker rmi 2>&1 \
+			 | awk '{print $$NF}'; \
+		echo "Removing container:"; \
+		docker images \
+			 | grep -E "$(REGEXP)" \
+			 | awk '{print $$3}' \
+			 | xargs docker rmi 2>&1 \
+			 | awk '{print $$NF}' \
+			 | xargs docker rm; \
+		echo "Removing image:"; \
+		docker images \
+			 | grep -E "$(REGEXP)" \
+			 | awk '{print $$3}' \
+			 | xargs docker rmi; \
 	fi
+
+rm-single-image-wip:
+			 echo docker images \
+			 | grep -E "$(REGEXP)" \
+			 | awk '{print $$3}' \
+			 | xargs docker rmi 2>&1 \
+			 | awk '{print $$NF}' \
+			 | xargs docker rm; \
+			 echo docker images \
+			 | grep -E "$(REGEXP)" \
+			 | awk '{print $$3}' \
+			 | xargs docker rmi; \
+	 fi
 
 rm-ALL: rm-containers rm-volumes rm-images ## Remove Docker containers, volumes, and images where (polis_tag="${TAG}")
 	@echo Done.

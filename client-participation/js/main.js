@@ -80,7 +80,6 @@ if (isEmbedded()) {
   }, 200);
 }
 
-
 function stripParams(paramsToStrip) {
   var params = Utils.decodeParams(encodedParams);
   var remainingParams = _.omit(params, paramsToStrip);

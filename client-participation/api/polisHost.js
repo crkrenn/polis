@@ -1,16 +1,17 @@
 (function() {
+  console.log("polisHost.js");
   var firstRun = !window.polis;
   window.polis = window.polis || {};
 
   function cookiesEnabledAtTopLevel() {
-    // create a temporary cookie 
+    // create a temporary cookie
     var soon = new Date(Date.now() + 1000).toUTCString();
     var teststring = "_polistest_cookiesenabled";
-    document.cookie = teststring + "=1; expires=" + soon;  
+    document.cookie = teststring + "=1; expires=" + soon;
     // see if it worked
     var cookieEnabled = document.cookie.indexOf(teststring) != -1;
     // clear the cookie
-    document.cookie = teststring + "=; expires=" + (new Date(0)).toUTCString();  
+    document.cookie = teststring + "=; expires=" + (new Date(0)).toUTCString();
     return cookieEnabled;
   }
 
@@ -23,6 +24,7 @@
      };
   }
   function createPolisIframe(parent, o) {
+    console.log("polisHost.js parent:", parent);
     var iframe = document.createElement("iframe");
     var path = [];
     if (o.demo) {
@@ -50,11 +52,12 @@
 
   if (firstRun) {
     window.addEventListener("message", function(event) {
-  
+      console.log("polisHost.js got message", event);
+
       if (!event.origin.match(/pol.is$/)) {
         return;
-      } 
-    
+      }
+
       if (event.data === "cookieRedirect" && cookiesEnabledAtTopLevel()) {
         // temporarily redirect to polis, which will set a cookie and redirect back
         window.location = "https://embed.pol.is/api/v3/launchPrep?dest=" + encodeReturnUrl(window.location+"");
