@@ -105,6 +105,7 @@ services:
         ENABLE_TWITTER_WIDGETS: ${ENABLE_TWITTER_WIDGETS:-false}
         FB_APP_ID: ${FB_APP_ID}
         GA_TRACKING_ID: ${GA_TRACKING_ID}
+        STATEMENTS_PER_USER: ${STATEMENTS_PER_USER}
         GIT_HASH: "${GIT_HASH:-placeholder}"
         NODE_ENV: production
         SERVICE_URL: ${SERVICE_URL}

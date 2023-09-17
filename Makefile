@@ -226,6 +226,20 @@ cp-static-assets-docker-helper:
 	cd .. && \
 	make gunzip-nonsuffix-files DIR=${STATIC_FILES}
 
+edit-static-files: # Edit static files
+	@if [ -z "${STATIC_FILES}" ]; then \
+		echo "Error: STATIC_FILES is not defined."; \
+		exit 1; \
+	elif [ -d "${STATIC_FILES}" ]; then \
+		echo "Editing files in ${STATIC_FILES}"; \
+		cd ${STATIC_FILES}; \
+		sed -i '' 's/r\.env\.STATEMENTS_PER_USER/10/g' js/*.js *.js; \
+		echo "Done editing files in ${STATIC_FILES}"; \
+	else \
+		echo "Error: STATIC_FILES directory does not exist."; \
+		exit 1; \
+	fi; \
+
 gunzip-nonsuffix-files:
 	@cd ${DIR} && find . -type f ! -name "*.gz" -print | while read -r file; do \
 		if file "$$file" | grep -q "gzip compressed"; then \
@@ -238,6 +252,7 @@ rebuild-and-upload-gcp-static-assets: ## Rebuild and upload DEV-CLOUD static ass
 	make DEV-CLOUD FILE_SERVER_ONLY build-no-cache && \
 	make DETACHED DEV-CLOUD ALL_BUT_MATH start && \
 	make DEV-CLOUD cp-static-assets-docker && \
+	make DEV-CLOUD edit-static-files && \
 	make DEV-CLOUD upload-gcp-static-assets && \
 	make DEV-CLOUD stop
 
