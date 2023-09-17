@@ -243,6 +243,7 @@ module.exports = function(params) {
   }
 
   function getNextComment(o) {
+    console.log("getNextComment")
     // var dfd = $.Deferred();
 
     // var index;
@@ -288,6 +289,7 @@ module.exports = function(params) {
 
 
     var p = polisGet(nextCommentPath, params);
+    console.log("nextCommentPath result:", p)
     p.then(function(c) {
       if (c && c.created) {
         nextCommentCache = c;

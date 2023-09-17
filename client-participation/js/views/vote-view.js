@@ -14,7 +14,6 @@ var $ = require("jquery");
 
 var iOS = Utils.isIos();
 
-
 function getOfficialTranslations(translations) {
   return (translations||[]).filter(function(t) {
     return t.src > 0;
@@ -24,6 +23,14 @@ function getMatchingOfficialTranslation(translations) {
   return getOfficialTranslations(translations).filter(function(t) {
     return Utils.matchesUiLang(t.lang);
   })[0];
+}
+
+function isObjectWithKey(obj, key) {
+  return obj && typeof obj === 'object' && obj.hasOwnProperty(key);
+}
+
+function isInteger(value) {
+  return Number.isInteger(value);
 }
 
 module.exports = Handlebones.ModelView.extend({
@@ -50,7 +57,12 @@ module.exports = Handlebones.ModelView.extend({
   },
   context: function() {
     var ctx = Handlebones.ModelView.prototype.context.apply(this, arguments);
+    const commentsRemaining = ctx.remaining;
+    console.log('context vote-view.js commentsRemaining:', commentsRemaining);
+    window.parent.postMessage({ commentsRemaining: commentsRemaining}, '*');
     ctx.showQuitForNowButton = true;
+    ctx.limitNumStatementsShown = true;
+    // ctx.targetCommentsRemaining = -1;
     ctx.iOS = iOS;
     ctx.customStyles = "";
     // if (ctx.txt && ctx.txt.length < 30) {
@@ -165,6 +177,24 @@ module.exports = Handlebones.ModelView.extend({
     // }
 
     var remaining = ctx.remaining;
+    console.log('vote-view.js ctx.limitNumStatementsShown:', ctx.limitNumStatementsShown);
+    if (ctx.limitNumStatementsShown) {
+      var targetCommentsRemaining = sessionStorage.getItem('targetCommentsRemaining')
+      if (targetCommentsRemaining !== null
+          && targetCommentsRemaining > -1) {
+        remaining = remaining - targetCommentsRemaining;
+        if (remaining < 1) {
+          console.log('vote-view.js reachedTargetComments');
+          window.parent.postMessage('polis-reachedTargetComments', '*');
+        }
+      }
+      console.log('limit statements vote-view.js remaining1:', remaining);
+      console.log('limit statements vote-view.js typeof remaining1:', typeof remaining);
+      if (typeof remaining === 'undefined' || isNaN(remaining) || remaining > Constants.STATEMENTS_PER_USER) {
+        remaining = Constants.STATEMENTS_PER_USER;
+      }
+      console.log('limit statements vote-view.js remaining2:', remaining);
+    }
     if (remaining > 100) {
       remaining = "100+";
     }
@@ -267,6 +297,26 @@ module.exports = Handlebones.ModelView.extend({
     this.model.set("shouldMod", true);
   },
   initialize: function(options) {
+    console.log('vote-view.js initialize');
+    console.log('vote-view.js options:', options);
+    console.log('vote-view.js adding window.listener.');
+    console.log('resetting targetMessages')
+    window.addEventListener("message", function(event) {
+      console.log("vote-view.js got message", event.data);
+      if (isObjectWithKey(event.data, 'targetCommentsRemaining')
+          && isInteger(event.data.targetCommentsRemaining)) {
+            sessionStorage.setItem(
+              'targetCommentsRemaining',
+              event.data.targetCommentsRemaining);
+            console.log('initialize vote-view.js targetCommentsRemaining:', event.data.targetCommentsRemaining);
+          };
+      var data = event.data||{};
+      var domain = event.origin.replace(/^https?:\/\//,'');
+      if (!domain.match(/(^|\.)<%= embedServiceHostname %>$/)) {
+        return;
+      }
+    }, false);
+
     Handlebones.ModelView.prototype.initialize.apply(this, arguments);
     eb.on(eb.exitConv, cleanup);
 

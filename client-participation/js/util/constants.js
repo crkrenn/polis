@@ -20,4 +20,6 @@ module.exports = {
   },
   FB_APP_ID: process.env.FB_APP_ID,
   GA_TRACKING_ID: process.env.GA_TRACKING_ID,
+  // TODO: add error for missing env vars or not a number
+  STATEMENTS_PER_USER: Number(process.env.STATEMENTS_PER_USER),
 };
