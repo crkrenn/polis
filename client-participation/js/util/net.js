@@ -60,36 +60,48 @@ function polisAjax(api, data, type, headers) {
   const retryDelays = [1000, 2000, 4000]; // Delays in milliseconds for each retry
 
   function _attempt(retryCount) {
+    console.log('polisAjax _attempt:', retryCount);
     var promise;
     if ("GET" === type) {
-      promise = $.ajax($.extend(config, {
-        type: "GET",
-        data: data
-      }));
+        promise = $.ajax($.extend(config, {
+            type: "GET",
+            data: data
+        }));
     } else if ("POST" === type) {
-      promise = $.ajax($.extend(config, {
-        type: "POST",
-        data: JSON.stringify(data)
-      }));
+      console.log('POST request data:', data);  // Log data
+      console.log('POST request headers:', h);  // Log headers
+      
+        promise = $.ajax($.extend(config, {
+            type: "POST",
+            data: JSON.stringify(data)
+        }));
     } else if ("PUT" === type) {
-      promise = $.ajax($.extend(config, {
-        type: "PUT",
-        data: JSON.stringify(data)
-      }));
+        promise = $.ajax($.extend(config, {
+            type: "PUT",
+            data: JSON.stringify(data)
+        }));
     }
 
     promise.then(function() {
-      var latestPid = Utils.getCookie("pid");
-      if (pid !== latestPid) {
-        pid = latestPid;
-        eb.trigger(eb.pidChange, latestPid);
-      }
+        var latestPid = Utils.getCookie("pid");
+        if (pid !== latestPid) {
+            pid = latestPid;
+            eb.trigger(eb.pidChange, latestPid);
+        }
+    }).fail(function(jqXHR, textStatus) {
+        if (retryCount < maxRetries) {
+            setTimeout(function() {
+                _attempt(retryCount + 1);
+            }, retryDelays[retryCount]);
+        } else {
+            console.error('Max retries reached', jqXHR, textStatus);
+            // Optionally, you can reject a promise here to propagate the error
+        }
     });
 
-    // sendEvent("Error", api, jqXHR.status);
-
     return promise;
-  }
+}
+
 
   return _attempt(0);  // Start with the first attempt
 }
@@ -106,7 +118,6 @@ function polisPut(api, data, headers) {
 function polisGet(api, data, headers) {
   return polisAjax(api, data, "GET", headers);
 }
-
 
 module.exports = {
   polisAjax: polisAjax,

@@ -185,6 +185,7 @@ module.exports = Handlebones.ModelView.extend({
         remaining = remaining - targetCommentsRemaining;
         if (remaining < 1) {
           console.log('vote-view.js reachedTargetComments');
+          console.log('rebuilt vote-view.js on 23/09/17 3:43 PM PST')
           window.parent.postMessage('polis-reachedTargetComments', '*');
         }
       }
@@ -408,6 +409,15 @@ module.exports = Handlebones.ModelView.extend({
     function onFail(err) {
       this.animateIn();
       console.error(err);
+      const myJSON = JSON.stringify(err, null, 2);
+      console.log('vote-view.js onFail jsonified error:', myJSON, new Date().toISOString());
+
+      // "{
+      //   \"readyState\": 4,
+      //   \"responseText\": \"Service Unavailable\",
+      //   \"status\": 503,
+      //   \"statusText\": \"error\"
+      // }"
 
       if (!Utils.cookiesEnabled()) {
         // TODO send GA event
@@ -585,8 +595,10 @@ module.exports = Handlebones.ModelView.extend({
         weight: this.getWeight(),
         tid: tid
       };
+      console.log('vote-view.js this.wipVote:', this.wipVote, new Date().toISOString());
       serverClient.addToVotesByMe(this.wipVote);
       this.onButtonClicked();
+      console.log('vote-view.js serverClient.agree', new Date().toISOString());
       serverClient.agree(tid, starred, this.wipVote.weight)
         .then(onVote.bind(this), onFail.bind(this));
     };

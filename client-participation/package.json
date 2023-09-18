@@ -5,6 +5,7 @@
     "analyze": "webpack --mode=production --analyze",
     "build": "npm run build:prod",
     "build:dev": "webpack --mode=development",
+    "build:prod2": "webpack --mode=development",
     "build:prod": "webpack --mode=production"
   },
   "browserslist": [

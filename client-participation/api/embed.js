@@ -214,7 +214,6 @@
     // }
 
     window.addEventListener("message", function(event) {
-      console.log("embed.js got message", event);
       var data = event.data||{};
       var domain = event.origin.replace(/^https?:\/\//,'');
       if (!domain.match(/(^|\.)<%= embedServiceHostname %>$/)) {

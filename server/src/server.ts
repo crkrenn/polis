@@ -7900,7 +7900,8 @@ Email verified! You can close this tab or hit the back button.
     let pid = req.p.pid; // PID_FLOW pid may be undefined here.
     let lang = req.p.lang;
 
-    // We allow viewing (and possibly writing) without cookies enabled, but voting requires cookies (except the auto-vote on your own comment, which seems ok)
+    // We allow viewing (and possibly writing) without cookies enabled,
+    // but voting requires cookies (except the auto-vote on your own comment, which seems ok)
     let token = req.cookies[COOKIES.TOKEN];
     let apiToken = req?.headers?.authorization || "";
     let xPolisHeaderToken = req?.headers?.["x-polis"];
