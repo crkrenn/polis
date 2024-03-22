@@ -23,6 +23,10 @@ TEST: ## Run in test mode (e.g. `make TEST e2e-run`, etc.) using config in `test
 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
+export DETACH_OPTION = ""
+DETACH: ## detach docker containters 
+	$(eval DETACH_OPTION = -d)
+
 echo_vars:
 	@echo ENV_FILE=${ENV_FILE}
 	@echo TAG=${TAG}
@@ -31,7 +35,7 @@ pull: echo_vars ## Pull most recent Docker container builds (nightlies)
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull
 
 start: echo_vars ## Start all Docker containers
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_OPTION}
 
 stop: echo_vars ## Stop all Docker containers
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
@@ -61,17 +65,17 @@ build-no-cache: echo_vars ## Build all Docker containers without cache
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
 
 start-recreate: echo_vars ## Start all Docker containers with recreated environments
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --force-recreate
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --force-recreate  ${DETACH_OPTION}
 
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build  ${DETACH_OPTION}
 
 start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images (including db), as with rm-ALL
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up --build  ${DETACH_OPTION}
 
 build-web-assets: ## Build and extract static web assets for cloud deployment to `build` dir
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} create --build --force-recreate file-server
