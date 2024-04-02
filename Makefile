@@ -23,7 +23,7 @@ TEST: ## Run in test mode (e.g. `make TEST e2e-run`, etc.) using config in `test
 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.test.yml)
 
-export DETACH_OPTION = ""
+export DETACH_OPTION = 
 DETACH: ## detach docker containters 
 	$(eval DETACH_OPTION = -d)
 
@@ -39,6 +39,9 @@ start: echo_vars ## Start all Docker containers
 
 stop: echo_vars ## Stop all Docker containers
 	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+
+logs: echo_vars ## make logs CONTAINERS="server postgres"
+	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} logs -f ${CONTAINERS}
 
 rm-containers: echo_vars ## Remove Docker containers where (polis_tag="${TAG}")
 	@echo 'removing filtered containers (polis_tag="${TAG}")'
